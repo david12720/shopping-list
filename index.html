@@ -45,6 +45,28 @@
     </section>
   </main>
 
+  <!-- Edit Product Modal -->
+  <div id="edit-modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>עריכת מוצר</h3>
+      <div class="edit-form">
+        <label>שם המוצר</label>
+        <input type="text" id="edit-name" placeholder="שם המוצר">
+        <label>קטגוריה</label>
+        <select id="edit-category"></select>
+        <label>יחידת ברירת מחדל</label>
+        <div class="unit-toggle">
+          <button class="edit-unit-btn active" data-unit="units">יחידות</button>
+          <button class="edit-unit-btn" data-unit="kg">ק"ג</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="edit-save" class="btn-primary">שמור</button>
+        <button id="edit-cancel" class="btn-secondary">ביטול</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Amount Selection Modal -->
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal">

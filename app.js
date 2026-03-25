@@ -13,11 +13,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const listRef = db.ref("shoppingList");
-const customProductsRef = db.ref("customProducts");
+const catalogRef = db.ref("catalog");
 
-// === Default Products Catalog ===
-const DEFAULT_PRODUCTS = [
-  // ירקות ופירות
+// === Initial Default Products (used to seed Firebase on first run) ===
+const SEED_PRODUCTS = [
   { id: "v1",  name: "עגבניות",      category: "ירקות ופירות", defaultUnit: "kg" },
   { id: "v2",  name: "מלפפונים",     category: "ירקות ופירות", defaultUnit: "kg" },
   { id: "v3",  name: "בצל",          category: "ירקות ופירות", defaultUnit: "kg" },
@@ -33,8 +32,6 @@ const DEFAULT_PRODUCTS = [
   { id: "v13", name: "פטרוזיליה",    category: "ירקות ופירות", defaultUnit: "units" },
   { id: "v14", name: "שום",          category: "ירקות ופירות", defaultUnit: "units" },
   { id: "v15", name: "תירס",         category: "ירקות ופירות", defaultUnit: "units" },
-
-  // מוצרי חלב
   { id: "d1",  name: "חלב",          category: "מוצרי חלב", defaultUnit: "units" },
   { id: "d2",  name: "ביצים",        category: "מוצרי חלב", defaultUnit: "units" },
   { id: "d3",  name: "גבינה צהובה",  category: "מוצרי חלב", defaultUnit: "units" },
@@ -45,8 +42,6 @@ const DEFAULT_PRODUCTS = [
   { id: "d8",  name: "חמאה",         category: "מוצרי חלב", defaultUnit: "units" },
   { id: "d9",  name: "שוקו",         category: "מוצרי חלב", defaultUnit: "units" },
   { id: "d10", name: "לבן",          category: "מוצרי חלב", defaultUnit: "units" },
-
-  // בשר ועוף
   { id: "m1",  name: "חזה עוף",      category: "בשר ועוף", defaultUnit: "kg" },
   { id: "m2",  name: "כרעיים",       category: "בשר ועוף", defaultUnit: "kg" },
   { id: "m3",  name: "בשר טחון",     category: "בשר ועוף", defaultUnit: "kg" },
@@ -55,8 +50,6 @@ const DEFAULT_PRODUCTS = [
   { id: "m6",  name: "המבורגר",      category: "בשר ועוף", defaultUnit: "units" },
   { id: "m7",  name: "כבד עוף",      category: "בשר ועוף", defaultUnit: "kg" },
   { id: "m8",  name: "סטייק",        category: "בשר ועוף", defaultUnit: "kg" },
-
-  // מאפים ולחם
   { id: "b1",  name: "לחם",          category: "מאפים ולחם", defaultUnit: "units" },
   { id: "b2",  name: "פיתות",        category: "מאפים ולחם", defaultUnit: "units" },
   { id: "b3",  name: "חלה",          category: "מאפים ולחם", defaultUnit: "units" },
@@ -64,16 +57,12 @@ const DEFAULT_PRODUCTS = [
   { id: "b5",  name: "טורטייה",      category: "מאפים ולחם", defaultUnit: "units" },
   { id: "b6",  name: "קרקרים",       category: "מאפים ולחם", defaultUnit: "units" },
   { id: "b7",  name: "עוגיות",       category: "מאפים ולחם", defaultUnit: "units" },
-
-  // שתייה
   { id: "s1",  name: "מים מינרליים", category: "שתייה", defaultUnit: "units" },
   { id: "s2",  name: "קולה",         category: "שתייה", defaultUnit: "units" },
   { id: "s3",  name: "מיץ תפוזים",   category: "שתייה", defaultUnit: "units" },
   { id: "s4",  name: "בירה",         category: "שתייה", defaultUnit: "units" },
   { id: "s5",  name: "יין",          category: "שתייה", defaultUnit: "units" },
   { id: "s6",  name: "סודה",         category: "שתייה", defaultUnit: "units" },
-
-  // מוצרי ניקיון
   { id: "c1",  name: "אקונומיקה",    category: "מוצרי ניקיון", defaultUnit: "units" },
   { id: "c2",  name: "סבון כלים",    category: "מוצרי ניקיון", defaultUnit: "units" },
   { id: "c3",  name: "נייר טואלט",   category: "מוצרי ניקיון", defaultUnit: "units" },
@@ -81,16 +70,12 @@ const DEFAULT_PRODUCTS = [
   { id: "c5",  name: "אבקת כביסה",   category: "מוצרי ניקיון", defaultUnit: "units" },
   { id: "c6",  name: "שקיות אשפה",   category: "מוצרי ניקיון", defaultUnit: "units" },
   { id: "c7",  name: "מגבונים",      category: "מוצרי ניקיון", defaultUnit: "units" },
-
-  // חטיפים וממתקים
   { id: "k1",  name: "במבה",         category: "חטיפים וממתקים", defaultUnit: "units" },
   { id: "k2",  name: "ביסלי",        category: "חטיפים וממתקים", defaultUnit: "units" },
   { id: "k3",  name: "שוקולד",       category: "חטיפים וממתקים", defaultUnit: "units" },
   { id: "k4",  name: "חטיף אנרגיה",  category: "חטיפים וממתקים", defaultUnit: "units" },
   { id: "k5",  name: "גלידה",        category: "חטיפים וממתקים", defaultUnit: "units" },
   { id: "k6",  name: "עוגה",         category: "חטיפים וממתקים", defaultUnit: "units" },
-
-  // שונות
   { id: "x1",  name: "שמן זית",      category: "שונות", defaultUnit: "units" },
   { id: "x2",  name: "אורז",         category: "שונות", defaultUnit: "units" },
   { id: "x3",  name: "פסטה",         category: "שונות", defaultUnit: "units" },
@@ -116,26 +101,23 @@ const CATEGORY_ORDER = [
   "שונות",
 ];
 
-// === Frequently Bought Items (top picks) ===
-const SUGGESTED_IDS = [
-  "d1", "d2", "b1", "v1", "v2", "v9", "d9", "c3", "s1", "x2", "m1", "v3"
+// === Frequently Bought Items (by name for flexibility) ===
+const SUGGESTED_NAMES = [
+  "חלב", "ביצים", "לחם", "עגבניות", "מלפפונים", "בננות",
+  "שוקו", "נייר טואלט", "מים מינרליים", "אורז", "חזה עוף", "בצל"
 ];
 
 // === In-memory state (synced from Firebase) ===
 let shoppingList = [];
-let customProducts = [];
+let catalog = [];
 
 // === Firebase Data Helpers ===
 function saveShoppingList() {
   listRef.set(shoppingList);
 }
 
-function saveCustomProducts() {
-  customProductsRef.set(customProducts);
-}
-
-function getAllProducts() {
-  return [...DEFAULT_PRODUCTS, ...customProducts];
+function saveCatalog() {
+  catalogRef.set(catalog);
 }
 
 // === Utility ===
@@ -150,15 +132,14 @@ function formatAmount(amount, unit) {
 
 // === Modal State ===
 let modalContext = null;
+let editContext = null;
 
 // === Render Suggested Items ===
 function renderSuggested() {
-  const suggested = SUGGESTED_IDS
-    .map(id => DEFAULT_PRODUCTS.find(p => p.id === id))
-    .filter(Boolean);
-
   let html = "";
-  suggested.forEach(product => {
+  SUGGESTED_NAMES.forEach(name => {
+    const product = catalog.find(p => p.name === name);
+    if (!product) return;
     html += `<button class="suggested-chip" data-name="${product.name}" data-category="${product.category}" data-unit="${product.defaultUnit}">${product.name}</button>`;
   });
 
@@ -189,6 +170,11 @@ const els = {
   clearPurchased: document.getElementById("clear-purchased"),
   clearAll: document.getElementById("clear-all"),
   syncStatus: document.getElementById("sync-status"),
+  editModalOverlay: document.getElementById("edit-modal-overlay"),
+  editName: document.getElementById("edit-name"),
+  editCategory: document.getElementById("edit-category"),
+  editSave: document.getElementById("edit-save"),
+  editCancel: document.getElementById("edit-cancel"),
 };
 
 // === Sync Status ===
@@ -210,7 +196,6 @@ function renderShoppingList() {
   const unpurchased = list.filter(item => !item.purchased);
   const purchased = list.filter(item => item.purchased);
 
-  // Update badge
   if (unpurchased.length > 0) {
     els.badge.textContent = unpurchased.length;
     els.badge.classList.remove("hidden");
@@ -218,7 +203,6 @@ function renderShoppingList() {
     els.badge.classList.add("hidden");
   }
 
-  // Empty state
   if (list.length === 0) {
     els.emptyState.classList.remove("hidden");
     els.listActions.classList.add("hidden");
@@ -263,11 +247,10 @@ function renderListItem(item) {
 function renderCatalog(filter) {
   const filterText = (filter || "").trim();
   const grouped = {};
-  const allProducts = getAllProducts();
 
   CATEGORY_ORDER.forEach(cat => { grouped[cat] = []; });
 
-  allProducts.forEach(product => {
+  catalog.forEach(product => {
     if (filterText && !product.name.includes(filterText)) return;
     if (!grouped[product.category]) grouped[product.category] = [];
     grouped[product.category].push(product);
@@ -278,7 +261,7 @@ function renderCatalog(filter) {
 
   CATEGORY_ORDER.forEach(cat => {
     const items = grouped[cat];
-    if (items.length === 0) return;
+    if (!items || items.length === 0) return;
     hasResults = true;
 
     html += `
@@ -291,9 +274,13 @@ function renderCatalog(filter) {
 
     items.forEach(product => {
       html += `
-        <div class="catalog-item" data-name="${product.name}" data-category="${product.category}" data-unit="${product.defaultUnit}">
+        <div class="catalog-item" data-id="${product.id}" data-name="${product.name}" data-category="${product.category}" data-unit="${product.defaultUnit}">
           <span class="catalog-item-name">${product.name}</span>
-          <button class="catalog-item-add">+</button>
+          <div class="catalog-item-actions">
+            <button class="catalog-item-edit" title="ערוך">✎</button>
+            <button class="catalog-item-remove" title="מחק">✕</button>
+            <button class="catalog-item-add">+</button>
+          </div>
         </div>
       `;
     });
@@ -308,9 +295,9 @@ function renderCatalog(filter) {
   els.catalog.innerHTML = html;
 }
 
-// === Modal ===
-function openAmountModal(name, defaultUnit, category, isCustom) {
-  modalContext = { name, category, isCustom };
+// === Amount Modal ===
+function openAmountModal(name, defaultUnit, category) {
+  modalContext = { name, category };
   els.modalProductName.textContent = name;
   setUnit(defaultUnit);
   els.amountInput.value = 1;
@@ -323,7 +310,7 @@ function closeModal() {
 }
 
 function setUnit(unit) {
-  document.querySelectorAll(".unit-btn").forEach(btn => {
+  document.querySelectorAll("#modal-overlay .unit-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.unit === unit);
   });
 
@@ -344,7 +331,7 @@ function setUnit(unit) {
 }
 
 function getActiveUnit() {
-  const active = document.querySelector(".unit-btn.active");
+  const active = document.querySelector("#modal-overlay .unit-btn.active");
   return active ? active.dataset.unit : "units";
 }
 
@@ -362,28 +349,61 @@ function confirmModal() {
   if (!modalContext) return;
   const unit = getActiveUnit();
   const amount = parseFloat(els.amountInput.value) || 1;
-  addItemToList(modalContext.name, modalContext.category, unit, amount, modalContext.isCustom);
+  addItemToList(modalContext.name, modalContext.category, unit, amount);
   closeModal();
 }
 
-// === Item Operations ===
-function addItemToList(name, category, unit, amount, isCustom) {
-  // Save custom item to products catalog for future use
-  if (isCustom) {
-    const alreadyExists = customProducts.some(p => p.name === name) ||
-                          DEFAULT_PRODUCTS.some(p => p.name === name);
-    if (!alreadyExists) {
-      customProducts.push({
-        id: "custom_" + Date.now(),
-        name,
-        category,
-        defaultUnit: unit,
-      });
-      saveCustomProducts();
-      renderCatalog(els.searchInput.value);
-    }
-  }
+// === Edit Product Modal ===
+function openEditModal(productId) {
+  const product = catalog.find(p => p.id === productId);
+  if (!product) return;
 
+  editContext = { id: productId };
+  els.editName.value = product.name;
+
+  // Populate category dropdown
+  els.editCategory.innerHTML = CATEGORY_ORDER.map(cat =>
+    `<option value="${cat}" ${cat === product.category ? "selected" : ""}>${cat}</option>`
+  ).join("");
+
+  // Set unit
+  document.querySelectorAll(".edit-unit-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.unit === product.defaultUnit);
+  });
+
+  els.editModalOverlay.classList.remove("hidden");
+}
+
+function closeEditModal() {
+  els.editModalOverlay.classList.add("hidden");
+  editContext = null;
+}
+
+function saveEditProduct() {
+  if (!editContext) return;
+  const idx = catalog.findIndex(p => p.id === editContext.id);
+  if (idx === -1) return;
+
+  const activeUnitBtn = document.querySelector(".edit-unit-btn.active");
+  catalog[idx].name = els.editName.value.trim();
+  catalog[idx].category = els.editCategory.value;
+  catalog[idx].defaultUnit = activeUnitBtn ? activeUnitBtn.dataset.unit : "units";
+
+  saveCatalog();
+  closeEditModal();
+}
+
+function removeCatalogProduct(productId) {
+  const product = catalog.find(p => p.id === productId);
+  if (!product) return;
+  if (!confirm(`למחוק את "${product.name}" מהקטלוג?`)) return;
+
+  catalog = catalog.filter(p => p.id !== productId);
+  saveCatalog();
+}
+
+// === Item Operations ===
+function addItemToList(name, category, unit, amount) {
   // Check for duplicate — merge amounts
   const existing = shoppingList.find(item => item.name === name && !item.purchased);
   if (existing) {
@@ -396,12 +416,24 @@ function addItemToList(name, category, unit, amount, isCustom) {
       unit,
       amount,
       purchased: false,
-      isCustom: isCustom || false,
     });
   }
 
   saveShoppingList();
   switchTab("list");
+}
+
+function addCustomProductToCatalog(name, unit) {
+  const alreadyExists = catalog.some(p => p.name === name);
+  if (alreadyExists) return;
+
+  catalog.push({
+    id: "p_" + Date.now(),
+    name,
+    category: "שונות",
+    defaultUnit: unit || "units",
+  });
+  saveCatalog();
 }
 
 function removeItem(id) {
@@ -477,10 +509,15 @@ function attachEventListeners() {
       return;
     }
 
-    const addBtn = e.target.closest(".catalog-item-add");
-    if (addBtn) {
-      const item = addBtn.closest(".catalog-item");
-      openAmountModal(item.dataset.name, item.dataset.unit, item.dataset.category, false);
+    const catalogItem = e.target.closest(".catalog-item");
+    if (!catalogItem) return;
+
+    if (e.target.closest(".catalog-item-add")) {
+      openAmountModal(catalogItem.dataset.name, catalogItem.dataset.unit, catalogItem.dataset.category);
+    } else if (e.target.closest(".catalog-item-edit")) {
+      openEditModal(catalogItem.dataset.id);
+    } else if (e.target.closest(".catalog-item-remove")) {
+      removeCatalogProduct(catalogItem.dataset.id);
     }
   });
 
@@ -488,7 +525,7 @@ function attachEventListeners() {
   document.getElementById("suggested-items").addEventListener("click", (e) => {
     const chip = e.target.closest(".suggested-chip");
     if (chip) {
-      openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category, false);
+      openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category);
     }
   });
 
@@ -505,12 +542,12 @@ function attachEventListeners() {
     if (e.key === "Enter") submitCustomItem();
   });
 
-  // Modal
+  // Amount Modal
   els.modalOverlay.addEventListener("click", (e) => {
     if (e.target === els.modalOverlay) closeModal();
   });
 
-  document.querySelectorAll(".unit-btn").forEach(btn => {
+  document.querySelectorAll("#modal-overlay .unit-btn").forEach(btn => {
     btn.addEventListener("click", () => setUnit(btn.dataset.unit));
   });
 
@@ -518,6 +555,21 @@ function attachEventListeners() {
   els.amountPlus.addEventListener("click", () => adjustAmount(1));
   els.modalConfirm.addEventListener("click", confirmModal);
   els.modalCancel.addEventListener("click", closeModal);
+
+  // Edit Modal
+  els.editModalOverlay.addEventListener("click", (e) => {
+    if (e.target === els.editModalOverlay) closeEditModal();
+  });
+
+  document.querySelectorAll(".edit-unit-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".edit-unit-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  els.editSave.addEventListener("click", saveEditProduct);
+  els.editCancel.addEventListener("click", closeEditModal);
 }
 
 function submitCustomItem() {
@@ -525,21 +577,31 @@ function submitCustomItem() {
   if (!name) return;
   els.customName.value = "";
   els.customForm.classList.add("hidden");
-  openAmountModal(name, "units", "שונות", true);
+  // Add to catalog first, then open amount modal
+  addCustomProductToCatalog(name, "units");
+  openAmountModal(name, "units", "שונות");
 }
 
 // === Firebase Real-time Listeners ===
 function setupFirebaseListeners() {
-  // Listen for shopping list changes — auto-updates when any device changes data
+  // Listen for shopping list changes
   listRef.on("value", (snapshot) => {
     shoppingList = snapshot.val() || [];
     renderShoppingList();
   });
 
-  // Listen for custom products changes
-  customProductsRef.on("value", (snapshot) => {
-    customProducts = snapshot.val() || [];
+  // Listen for catalog changes
+  catalogRef.on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (data === null) {
+      // First run — seed the catalog
+      catalog = [...SEED_PRODUCTS];
+      saveCatalog();
+    } else {
+      catalog = data;
+    }
     renderCatalog(els.searchInput.value);
+    renderSuggested();
   });
 
   // Connection status

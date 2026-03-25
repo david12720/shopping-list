@@ -413,6 +413,14 @@ main {
 
 .catalog-item-name {
   font-size: 0.95rem;
+  flex: 1;
+}
+
+.catalog-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .catalog-item-add {
@@ -434,6 +442,39 @@ main {
 
 .catalog-item-add:hover {
   background: var(--primary-dark);
+}
+
+.catalog-item-edit,
+.catalog-item-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.catalog-item-edit {
+  color: var(--text-muted);
+}
+
+.catalog-item-edit:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.catalog-item-remove {
+  color: var(--text-muted);
+}
+
+.catalog-item-remove:hover {
+  background: var(--danger-light);
+  color: var(--danger);
 }
 
 .no-results {
@@ -548,6 +589,44 @@ main {
 #amount-input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+/* Edit Form */
+.edit-form {
+  margin-bottom: 20px;
+}
+
+.edit-form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  margin-top: 12px;
+}
+
+.edit-form label:first-child {
+  margin-top: 0;
+}
+
+.edit-form input,
+.edit-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.edit-form input:focus,
+.edit-form select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.edit-form .unit-toggle {
+  margin-bottom: 0;
 }
 
 .modal-actions {
