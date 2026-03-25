@@ -252,6 +252,42 @@ main {
   background: #c62828;
 }
 
+/* Suggested Items */
+.suggested-section {
+  margin-bottom: 16px;
+}
+
+.suggested-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.suggested-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggested-chip {
+  padding: 8px 16px;
+  background: var(--card);
+  border: 2px solid var(--primary);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.suggested-chip:hover {
+  background: var(--primary);
+  color: white;
+}
+
 /* Search */
 #search-input {
   width: 100%;

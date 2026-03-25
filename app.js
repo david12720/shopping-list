@@ -99,6 +99,11 @@ const CATEGORY_ORDER = [
   "שונות",
 ];
 
+// === Frequently Bought Items (top picks) ===
+const SUGGESTED_IDS = [
+  "d1", "d2", "b1", "v1", "v2", "v9", "d9", "c3", "s1", "x2", "m1", "v3"
+];
+
 // === localStorage Helpers ===
 function getShoppingList() {
   try {
@@ -110,6 +115,22 @@ function getShoppingList() {
 
 function saveShoppingList(list) {
   localStorage.setItem("shoppingList", JSON.stringify(list));
+}
+
+function getCustomProducts() {
+  try {
+    return JSON.parse(localStorage.getItem("customProducts")) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomProducts(products) {
+  localStorage.setItem("customProducts", JSON.stringify(products));
+}
+
+function getAllProducts() {
+  return [...DEFAULT_PRODUCTS, ...getCustomProducts()];
 }
 
 // === Utility ===
@@ -124,6 +145,20 @@ function formatAmount(amount, unit) {
 
 // === Modal State ===
 let modalContext = null;
+
+// === Render Suggested Items ===
+function renderSuggested() {
+  const suggested = SUGGESTED_IDS
+    .map(id => DEFAULT_PRODUCTS.find(p => p.id === id))
+    .filter(Boolean);
+
+  let html = "";
+  suggested.forEach(product => {
+    html += `<button class="suggested-chip" data-name="${product.name}" data-category="${product.category}" data-unit="${product.defaultUnit}">${product.name}</button>`;
+  });
+
+  document.getElementById("suggested-items").innerHTML = html;
+}
 
 // === DOM References ===
 const els = {
@@ -209,11 +244,13 @@ function renderListItem(item) {
 function renderCatalog(filter) {
   const filterText = (filter || "").trim();
   const grouped = {};
+  const allProducts = getAllProducts();
 
   CATEGORY_ORDER.forEach(cat => { grouped[cat] = []; });
 
-  DEFAULT_PRODUCTS.forEach(product => {
+  allProducts.forEach(product => {
     if (filterText && !product.name.includes(filterText)) return;
+    if (!grouped[product.category]) grouped[product.category] = [];
     grouped[product.category].push(product);
   });
 
@@ -318,6 +355,23 @@ function confirmModal() {
 // === Item Operations ===
 function addItemToList(name, category, unit, amount, isCustom) {
   const list = getShoppingList();
+
+  // Save custom item to products catalog for future use
+  if (isCustom) {
+    const customProducts = getCustomProducts();
+    const alreadyExists = customProducts.some(p => p.name === name) ||
+                          DEFAULT_PRODUCTS.some(p => p.name === name);
+    if (!alreadyExists) {
+      customProducts.push({
+        id: "custom_" + Date.now(),
+        name,
+        category,
+        defaultUnit: unit,
+      });
+      saveCustomProducts(customProducts);
+      renderCatalog(els.searchInput.value);
+    }
+  }
 
   // Check for duplicate — merge amounts
   const existing = list.find(item => item.name === name && !item.purchased);
@@ -427,6 +481,14 @@ function attachEventListeners() {
     }
   });
 
+  // Suggested items — event delegation
+  document.getElementById("suggested-items").addEventListener("click", (e) => {
+    const chip = e.target.closest(".suggested-chip");
+    if (chip) {
+      openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category, false);
+    }
+  });
+
   // Custom item
   els.addCustomBtn.addEventListener("click", () => {
     els.customForm.classList.toggle("hidden");
@@ -466,6 +528,7 @@ function submitCustomItem() {
 // === Initialize ===
 document.addEventListener("DOMContentLoaded", () => {
   renderShoppingList();
+  renderSuggested();
   renderCatalog("");
   attachEventListeners();
 });
