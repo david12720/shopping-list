@@ -1,0 +1,12 @@
+{
+  "name": "shopping-list",
+  "version": "1.0.0",
+  "description": "Hebrew shopping list with Firebase real-time sync",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

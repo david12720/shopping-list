@@ -178,6 +178,17 @@ main {
   text-align: center;
 }
 
+.item-amount-edit {
+  cursor: pointer;
+  border-bottom: 1px dotted var(--text-muted);
+  transition: all 0.2s;
+}
+
+.item-amount-edit:hover {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
 .item-delete {
   background: none;
   border: none;
@@ -362,6 +373,19 @@ main {
   border-color: var(--primary);
 }
 
+.custom-form select {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.custom-form select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
 /* Catalog */
 .category {
   margin-bottom: 12px;
@@ -481,6 +505,27 @@ main {
   text-align: center;
   padding: 30px;
   color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-results-add {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+}
+
+.no-results-add:hover {
+  background: rgba(76, 175, 80, 0.1);
 }
 
 /* Modal */

@@ -122,17 +122,17 @@ function saveCatalog() {
 
 // === Utility ===
 function formatUnit(unit) {
-  return unit === "kg" ? 'ק"ג' : "יח'";
+  return AppUtils.formatUnit(unit);
 }
 
 function formatAmount(amount, unit) {
-  const display = unit === "kg" ? amount : Math.floor(amount);
-  return `${display} ${formatUnit(unit)}`;
+  return AppUtils.formatAmount(amount, unit);
 }
 
 // === Modal State ===
 let modalContext = null;
 let editContext = null;
+let listItemEditId = null;
 
 // === Render Suggested Items ===
 function renderSuggested() {
@@ -159,6 +159,7 @@ const els = {
   addCustomBtn: document.getElementById("add-custom-btn"),
   customForm: document.getElementById("custom-form"),
   customName: document.getElementById("custom-name"),
+  customCategory: document.getElementById("custom-category"),
   customSubmit: document.getElementById("custom-submit"),
   modalOverlay: document.getElementById("modal-overlay"),
   modalProductName: document.getElementById("modal-product-name"),
@@ -237,7 +238,7 @@ function renderListItem(item) {
     <li class="list-item ${purchasedClass}" data-id="${item.id}">
       <input type="checkbox" class="item-checkbox" ${checkedAttr}>
       <span class="item-name">${item.name}</span>
-      <span class="item-amount">${formatAmount(item.amount, item.unit)}</span>
+      <span class="item-amount item-amount-edit">${formatAmount(item.amount, item.unit)}</span>
       <button class="item-delete" title="מחק">✕</button>
     </li>
   `;
@@ -289,24 +290,42 @@ function renderCatalog(filter) {
   });
 
   if (!hasResults) {
-    html = `<div class="no-results">לא נמצאו מוצרים</div>`;
+    if (filterText) {
+      html = `<div class="no-results">לא נמצאו מוצרים <button class="no-results-add" data-name="${filterText}">+ הוסף "${filterText}"</button></div>`;
+    } else {
+      html = `<div class="no-results">לא נמצאו מוצרים</div>`;
+    }
   }
 
   els.catalog.innerHTML = html;
 }
 
 // === Amount Modal ===
-function openAmountModal(name, defaultUnit, category) {
+function openAmountModal(name, defaultUnit, category, itemId) {
+  listItemEditId = itemId || null;
   modalContext = { name, category };
   els.modalProductName.textContent = name;
   setUnit(defaultUnit);
-  els.amountInput.value = 1;
+
+  if (itemId) {
+    // Editing existing item — pre-fill amount
+    const item = shoppingList.find(i => i.id === itemId);
+    if (item) {
+      els.amountInput.value = item.amount;
+      setUnit(item.unit);
+    }
+  } else {
+    // Adding new item
+    els.amountInput.value = 1;
+  }
+
   els.modalOverlay.classList.remove("hidden");
 }
 
 function closeModal() {
   els.modalOverlay.classList.add("hidden");
   modalContext = null;
+  listItemEditId = null;
 }
 
 function setUnit(unit) {
@@ -349,7 +368,19 @@ function confirmModal() {
   if (!modalContext) return;
   const unit = getActiveUnit();
   const amount = parseFloat(els.amountInput.value) || 1;
-  addItemToList(modalContext.name, modalContext.category, unit, amount);
+
+  if (listItemEditId) {
+    // Update existing item
+    const item = shoppingList.find(i => i.id === listItemEditId);
+    if (item) {
+      item.amount = amount;
+      item.unit = unit;
+      saveShoppingList();
+    }
+  } else {
+    // Add new item
+    addItemToList(modalContext.name, modalContext.category, unit, amount);
+  }
   closeModal();
 }
 
@@ -423,14 +454,14 @@ function addItemToList(name, category, unit, amount) {
   switchTab("list");
 }
 
-function addCustomProductToCatalog(name, unit) {
+function addCustomProductToCatalog(name, unit, category) {
   const alreadyExists = catalog.some(p => p.name === name);
   if (alreadyExists) return;
 
   catalog.push({
     id: "p_" + Date.now(),
     name,
-    category: "שונות",
+    category: category || "שונות",
     defaultUnit: unit || "units",
   });
   saveCatalog();
@@ -472,6 +503,11 @@ function switchTab(tabName) {
 
 // === Event Listeners ===
 function attachEventListeners() {
+  // Populate category select
+  els.customCategory.innerHTML = CATEGORY_ORDER.map(cat =>
+    `<option value="${cat}">${cat}</option>`
+  ).join("");
+
   // Tab clicks
   document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
@@ -482,11 +518,14 @@ function attachEventListeners() {
     const li = e.target.closest(".list-item");
     if (!li) return;
     const id = li.dataset.id;
+    const item = shoppingList.find(i => i.id === id);
 
     if (e.target.classList.contains("item-checkbox")) {
       togglePurchased(id);
     } else if (e.target.classList.contains("item-delete")) {
       removeItem(id);
+    } else if (e.target.classList.contains("item-amount-edit") && item) {
+      openAmountModal(item.name, item.unit, item.category, id);
     }
   });
 
@@ -506,6 +545,15 @@ function attachEventListeners() {
       header.classList.toggle("open");
       const items = header.nextElementSibling;
       items.classList.toggle("open");
+      return;
+    }
+
+    const noResultsAdd = e.target.closest(".no-results-add");
+    if (noResultsAdd) {
+      const name = noResultsAdd.dataset.name;
+      els.customName.value = name;
+      els.customForm.classList.remove("hidden");
+      els.customName.focus();
       return;
     }
 
@@ -575,11 +623,12 @@ function attachEventListeners() {
 function submitCustomItem() {
   const name = els.customName.value.trim();
   if (!name) return;
+  const category = els.customCategory.value || "שונות";
   els.customName.value = "";
   els.customForm.classList.add("hidden");
   // Add to catalog first, then open amount modal
-  addCustomProductToCatalog(name, "units");
-  openAmountModal(name, "units", "שונות");
+  addCustomProductToCatalog(name, "units", category);
+  openAmountModal(name, "units", category);
 }
 
 // === Firebase Real-time Listeners ===
