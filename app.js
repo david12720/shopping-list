@@ -12,8 +12,9 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const listRef = db.ref("shoppingList");
-const catalogRef = db.ref("catalog");
+let listRef = db.ref("shoppingList");
+let catalogRef = db.ref("catalog");
+let templateRef = db.ref("templateList");
 
 // === Initial Default Products (used to seed Firebase on first run) ===
 const SEED_PRODUCTS = [
@@ -110,6 +111,7 @@ const SUGGESTED_NAMES = [
 // === In-memory state (synced from Firebase) ===
 let shoppingList = [];
 let catalog = [];
+let templateList = [];
 
 // === Firebase Data Helpers ===
 function saveShoppingList() {
@@ -118,6 +120,10 @@ function saveShoppingList() {
 
 function saveCatalog() {
   catalogRef.set(catalog);
+}
+
+function saveTemplate() {
+  templateRef.set(templateList);
 }
 
 // === Utility ===
@@ -133,6 +139,8 @@ function formatAmount(amount, unit) {
 let modalContext = null;
 let editContext = null;
 let listItemEditId = null;
+let modalTarget = "list"; // "list" or "template"
+let addingToTarget = "list"; // Track if we're adding to list or template from the add view
 
 // === Render Suggested Items ===
 function renderSuggested() {
@@ -151,9 +159,14 @@ const els = {
   badge: document.getElementById("badge"),
   listView: document.getElementById("list-view"),
   addView: document.getElementById("add-view"),
+  templateView: document.getElementById("template-view"),
   emptyState: document.getElementById("empty-state"),
+  templateEmptyState: document.getElementById("template-empty-state"),
   shoppingList: document.getElementById("shopping-list"),
+  templateList: document.getElementById("template-list"),
   listActions: document.getElementById("list-actions"),
+  addToTemplateBtn: document.getElementById("add-to-template-btn"),
+  addAllTemplateBtn: document.getElementById("add-all-template"),
   searchInput: document.getElementById("search-input"),
   catalog: document.getElementById("catalog"),
   addCustomBtn: document.getElementById("add-custom-btn"),
@@ -244,6 +257,31 @@ function renderListItem(item) {
   `;
 }
 
+// === Render Template ===
+function renderTemplate() {
+  const hasItems = templateList.length > 0;
+  els.templateEmptyState.classList.toggle("hidden", hasItems);
+  els.addAllTemplateBtn.classList.toggle("hidden", !hasItems);
+
+  if (!hasItems) {
+    els.templateList.innerHTML = "";
+    return;
+  }
+
+  let html = "";
+  templateList.forEach(item => {
+    html += `
+      <li class="list-item" data-id="${item.id}">
+        <span class="item-name">${item.name}</span>
+        <span class="item-amount item-amount-edit">${formatAmount(item.amount, item.unit)}</span>
+        <button class="item-delete" title="מחק">✕</button>
+      </li>
+    `;
+  });
+
+  els.templateList.innerHTML = html;
+}
+
 // === Render Catalog ===
 function renderCatalog(filter) {
   const filterText = (filter || "").trim();
@@ -301,15 +339,17 @@ function renderCatalog(filter) {
 }
 
 // === Amount Modal ===
-function openAmountModal(name, defaultUnit, category, itemId) {
+function openAmountModal(name, defaultUnit, category, itemId, target = "list") {
   listItemEditId = itemId || null;
+  modalTarget = target;
   modalContext = { name, category };
   els.modalProductName.textContent = name;
   setUnit(defaultUnit);
 
   if (itemId) {
     // Editing existing item — pre-fill amount
-    const item = shoppingList.find(i => i.id === itemId);
+    const list = target === "template" ? templateList : shoppingList;
+    const item = list.find(i => i.id === itemId);
     if (item) {
       els.amountInput.value = item.amount;
       setUnit(item.unit);
@@ -326,6 +366,7 @@ function closeModal() {
   els.modalOverlay.classList.add("hidden");
   modalContext = null;
   listItemEditId = null;
+  modalTarget = "list";
 }
 
 function setUnit(unit) {
@@ -369,17 +410,32 @@ function confirmModal() {
   const unit = getActiveUnit();
   const amount = parseFloat(els.amountInput.value) || 1;
 
-  if (listItemEditId) {
-    // Update existing item
-    const item = shoppingList.find(i => i.id === listItemEditId);
-    if (item) {
-      item.amount = amount;
-      item.unit = unit;
-      saveShoppingList();
+  if (modalTarget === "template") {
+    if (listItemEditId) {
+      // Update existing template item
+      const item = templateList.find(i => i.id === listItemEditId);
+      if (item) {
+        item.amount = amount;
+        item.unit = unit;
+        saveTemplate();
+      }
+    } else {
+      // Add new item to template
+      addItemToTemplate(modalContext.name, modalContext.category, unit, amount);
     }
   } else {
-    // Add new item
-    addItemToList(modalContext.name, modalContext.category, unit, amount);
+    if (listItemEditId) {
+      // Update existing list item
+      const item = shoppingList.find(i => i.id === listItemEditId);
+      if (item) {
+        item.amount = amount;
+        item.unit = unit;
+        saveShoppingList();
+      }
+    } else {
+      // Add new item to list
+      addItemToList(modalContext.name, modalContext.category, unit, amount);
+    }
   }
   closeModal();
 }
@@ -467,6 +523,38 @@ function addCustomProductToCatalog(name, unit, category) {
   saveCatalog();
 }
 
+// === Template Item Operations ===
+function addItemToTemplate(name, category, unit, amount) {
+  // Check for duplicate — merge amounts
+  const existing = templateList.find(item => item.name === name);
+  if (existing) {
+    existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+  } else {
+    templateList.push({
+      id: "tpl_" + Date.now(),
+      name,
+      category,
+      unit,
+      amount,
+    });
+  }
+
+  saveTemplate();
+}
+
+function removeTemplateItem(id) {
+  templateList = templateList.filter(item => item.id !== id);
+  saveTemplate();
+}
+
+function addAllTemplateToList() {
+  if (templateList.length === 0) return;
+  templateList.forEach(item => {
+    addItemToList(item.name, item.category, item.unit, item.amount);
+  });
+  switchTab("list");
+}
+
 function removeItem(id) {
   shoppingList = shoppingList.filter(item => item.id !== id);
   saveShoppingList();
@@ -499,6 +587,12 @@ function switchTab(tabName) {
 
   els.listView.classList.toggle("active", tabName === "list");
   els.addView.classList.toggle("active", tabName === "add");
+  els.templateView.classList.toggle("active", tabName === "template");
+
+  // Reset addingToTarget when leaving add view
+  if (tabName !== "add") {
+    addingToTarget = "list";
+  }
 }
 
 // === Event Listeners ===
@@ -528,6 +622,28 @@ function attachEventListeners() {
       openAmountModal(item.name, item.unit, item.category, id);
     }
   });
+
+  // Template list — event delegation
+  els.templateList.addEventListener("click", (e) => {
+    const li = e.target.closest(".list-item");
+    if (!li) return;
+    const id = li.dataset.id;
+    const item = templateList.find(i => i.id === id);
+
+    if (e.target.classList.contains("item-delete")) {
+      removeTemplateItem(id);
+    } else if (e.target.classList.contains("item-amount-edit") && item) {
+      openAmountModal(item.name, item.unit, item.category, id, "template");
+    }
+  });
+
+  // Template actions
+  els.addToTemplateBtn.addEventListener("click", () => {
+    addingToTarget = "template";
+    switchTab("add");
+  });
+
+  els.addAllTemplateBtn.addEventListener("click", addAllTemplateToList);
 
   // Clear buttons
   els.clearPurchased.addEventListener("click", clearPurchased);
@@ -561,7 +677,7 @@ function attachEventListeners() {
     if (!catalogItem) return;
 
     if (e.target.closest(".catalog-item-add")) {
-      openAmountModal(catalogItem.dataset.name, catalogItem.dataset.unit, catalogItem.dataset.category);
+      openAmountModal(catalogItem.dataset.name, catalogItem.dataset.unit, catalogItem.dataset.category, null, addingToTarget);
     } else if (e.target.closest(".catalog-item-edit")) {
       openEditModal(catalogItem.dataset.id);
     } else if (e.target.closest(".catalog-item-remove")) {
@@ -573,7 +689,7 @@ function attachEventListeners() {
   document.getElementById("suggested-items").addEventListener("click", (e) => {
     const chip = e.target.closest(".suggested-chip");
     if (chip) {
-      openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category);
+      openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category, null, addingToTarget);
     }
   });
 
@@ -651,6 +767,12 @@ function setupFirebaseListeners() {
     }
     renderCatalog(els.searchInput.value);
     renderSuggested();
+  });
+
+  // Listen for template changes
+  templateRef.on("value", (snapshot) => {
+    templateList = snapshot.val() || [];
+    renderTemplate();
   });
 
   // Connection status

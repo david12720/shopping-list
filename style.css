@@ -226,6 +226,33 @@ main {
   display: none;
 }
 
+/* Template Actions */
+#template-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+#template-empty-state p:first-child {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+#template-list {
+  list-style: none;
+}
+
+.template-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+#add-all-template {
+  width: 100%;
+}
+
 /* Buttons */
 .btn-primary {
   background: var(--primary);

@@ -12,6 +12,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="list">הרשימה שלי <span id="badge" class="badge hidden">0</span></button>
       <button class="tab" data-tab="add">הוספת מוצרים</button>
+      <button class="tab" data-tab="template">תבנית</button>
     </nav>
   </header>
 
@@ -29,7 +30,20 @@
       </div>
     </section>
 
-    <!-- View 2: Add Products -->
+    <!-- View 2: Template -->
+    <section id="template-view" class="view">
+      <div id="template-empty-state">
+        <p>התבנית ריקה</p>
+        <p>הוסיפו מוצרים כדי ליצור תבנית שבועית</p>
+      </div>
+      <ul id="template-list"></ul>
+      <div id="template-actions" class="template-actions">
+        <button id="add-to-template-btn" class="btn-secondary">+ הוסף מוצר לתבנית</button>
+        <button id="add-all-template" class="btn-primary hidden">הוסף הכל לרשימה</button>
+      </div>
+    </section>
+
+    <!-- View 3: Add Products -->
     <section id="add-view" class="view">
       <div id="suggested-section" class="suggested-section">
         <h3 class="suggested-title">מוצרים נפוצים</h3>
