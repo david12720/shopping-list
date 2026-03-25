@@ -1,3 +1,20 @@
+// === Firebase Config ===
+const firebaseConfig = {
+  apiKey: "AIzaSyAR95QpwEzKjWaS80WaNESnmSqbCEqI6hk",
+  authDomain: "shopping-list-b2681.firebaseapp.com",
+  databaseURL: "https://shopping-list-b2681-default-rtdb.firebaseio.com",
+  projectId: "shopping-list-b2681",
+  storageBucket: "shopping-list-b2681.firebasestorage.app",
+  messagingSenderId: "435223136068",
+  appId: "1:435223136068:web:12530445ecca0edd777911",
+  measurementId: "G-ZP8E3PSVY2"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const listRef = db.ref("shoppingList");
+const customProductsRef = db.ref("customProducts");
+
 // === Default Products Catalog ===
 const DEFAULT_PRODUCTS = [
   // ירקות ופירות
@@ -104,33 +121,21 @@ const SUGGESTED_IDS = [
   "d1", "d2", "b1", "v1", "v2", "v9", "d9", "c3", "s1", "x2", "m1", "v3"
 ];
 
-// === localStorage Helpers ===
-function getShoppingList() {
-  try {
-    return JSON.parse(localStorage.getItem("shoppingList")) || [];
-  } catch {
-    return [];
-  }
+// === In-memory state (synced from Firebase) ===
+let shoppingList = [];
+let customProducts = [];
+
+// === Firebase Data Helpers ===
+function saveShoppingList() {
+  listRef.set(shoppingList);
 }
 
-function saveShoppingList(list) {
-  localStorage.setItem("shoppingList", JSON.stringify(list));
-}
-
-function getCustomProducts() {
-  try {
-    return JSON.parse(localStorage.getItem("customProducts")) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomProducts(products) {
-  localStorage.setItem("customProducts", JSON.stringify(products));
+function saveCustomProducts() {
+  customProductsRef.set(customProducts);
 }
 
 function getAllProducts() {
-  return [...DEFAULT_PRODUCTS, ...getCustomProducts()];
+  return [...DEFAULT_PRODUCTS, ...customProducts];
 }
 
 // === Utility ===
@@ -183,11 +188,25 @@ const els = {
   modalCancel: document.getElementById("modal-cancel"),
   clearPurchased: document.getElementById("clear-purchased"),
   clearAll: document.getElementById("clear-all"),
+  syncStatus: document.getElementById("sync-status"),
 };
+
+// === Sync Status ===
+function setSyncStatus(status) {
+  if (status === "connected") {
+    els.syncStatus.textContent = "●";
+    els.syncStatus.title = "מחובר";
+    els.syncStatus.className = "sync-status connected";
+  } else {
+    els.syncStatus.textContent = "●";
+    els.syncStatus.title = "לא מחובר";
+    els.syncStatus.className = "sync-status disconnected";
+  }
+}
 
 // === Render Shopping List ===
 function renderShoppingList() {
-  const list = getShoppingList();
+  const list = shoppingList;
   const unpurchased = list.filter(item => !item.purchased);
   const purchased = list.filter(item => item.purchased);
 
@@ -293,13 +312,8 @@ function renderCatalog(filter) {
 function openAmountModal(name, defaultUnit, category, isCustom) {
   modalContext = { name, category, isCustom };
   els.modalProductName.textContent = name;
-
-  // Set unit
   setUnit(defaultUnit);
-
-  // Reset amount
   els.amountInput.value = 1;
-
   els.modalOverlay.classList.remove("hidden");
 }
 
@@ -354,11 +368,8 @@ function confirmModal() {
 
 // === Item Operations ===
 function addItemToList(name, category, unit, amount, isCustom) {
-  const list = getShoppingList();
-
   // Save custom item to products catalog for future use
   if (isCustom) {
-    const customProducts = getCustomProducts();
     const alreadyExists = customProducts.some(p => p.name === name) ||
                           DEFAULT_PRODUCTS.some(p => p.name === name);
     if (!alreadyExists) {
@@ -368,18 +379,17 @@ function addItemToList(name, category, unit, amount, isCustom) {
         category,
         defaultUnit: unit,
       });
-      saveCustomProducts(customProducts);
+      saveCustomProducts();
       renderCatalog(els.searchInput.value);
     }
   }
 
   // Check for duplicate — merge amounts
-  const existing = list.find(item => item.name === name && !item.purchased);
+  const existing = shoppingList.find(item => item.name === name && !item.purchased);
   if (existing) {
     existing.amount = Math.round((existing.amount + amount) * 10) / 10;
-    saveShoppingList(list);
   } else {
-    list.push({
+    shoppingList.push({
       id: "item_" + Date.now(),
       name,
       category,
@@ -388,39 +398,34 @@ function addItemToList(name, category, unit, amount, isCustom) {
       purchased: false,
       isCustom: isCustom || false,
     });
-    saveShoppingList(list);
   }
 
-  renderShoppingList();
+  saveShoppingList();
   switchTab("list");
 }
 
 function removeItem(id) {
-  const list = getShoppingList().filter(item => item.id !== id);
-  saveShoppingList(list);
-  renderShoppingList();
+  shoppingList = shoppingList.filter(item => item.id !== id);
+  saveShoppingList();
 }
 
 function togglePurchased(id) {
-  const list = getShoppingList();
-  const item = list.find(item => item.id === id);
+  const item = shoppingList.find(item => item.id === id);
   if (item) {
     item.purchased = !item.purchased;
-    saveShoppingList(list);
-    renderShoppingList();
+    saveShoppingList();
   }
 }
 
 function clearPurchased() {
-  const list = getShoppingList().filter(item => !item.purchased);
-  saveShoppingList(list);
-  renderShoppingList();
+  shoppingList = shoppingList.filter(item => !item.purchased);
+  saveShoppingList();
 }
 
 function clearAll() {
   if (!confirm("למחוק את כל הרשימה?")) return;
-  saveShoppingList([]);
-  renderShoppingList();
+  shoppingList = [];
+  saveShoppingList();
 }
 
 // === Tab Navigation ===
@@ -464,7 +469,6 @@ function attachEventListeners() {
 
   // Catalog — event delegation
   els.catalog.addEventListener("click", (e) => {
-    // Category toggle
     const header = e.target.closest(".category-header");
     if (header) {
       header.classList.toggle("open");
@@ -473,7 +477,6 @@ function attachEventListeners() {
       return;
     }
 
-    // Add button
     const addBtn = e.target.closest(".catalog-item-add");
     if (addBtn) {
       const item = addBtn.closest(".catalog-item");
@@ -525,10 +528,31 @@ function submitCustomItem() {
   openAmountModal(name, "units", "שונות", true);
 }
 
+// === Firebase Real-time Listeners ===
+function setupFirebaseListeners() {
+  // Listen for shopping list changes — auto-updates when any device changes data
+  listRef.on("value", (snapshot) => {
+    shoppingList = snapshot.val() || [];
+    renderShoppingList();
+  });
+
+  // Listen for custom products changes
+  customProductsRef.on("value", (snapshot) => {
+    customProducts = snapshot.val() || [];
+    renderCatalog(els.searchInput.value);
+  });
+
+  // Connection status
+  const connectedRef = db.ref(".info/connected");
+  connectedRef.on("value", (snapshot) => {
+    setSyncStatus(snapshot.val() ? "connected" : "disconnected");
+  });
+}
+
 // === Initialize ===
 document.addEventListener("DOMContentLoaded", () => {
-  renderShoppingList();
   renderSuggested();
   renderCatalog("");
   attachEventListeners();
+  setupFirebaseListeners();
 });

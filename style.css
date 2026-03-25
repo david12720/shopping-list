@@ -43,6 +43,19 @@ header h1 {
   text-align: center;
 }
 
+.sync-status {
+  font-size: 0.6rem;
+  vertical-align: middle;
+}
+
+.sync-status.connected {
+  color: #a5d6a7;
+}
+
+.sync-status.disconnected {
+  color: #ef9a9a;
+}
+
 .tabs {
   display: flex;
   gap: 0;
