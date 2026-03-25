@@ -141,6 +141,7 @@ let editContext = null;
 let listItemEditId = null;
 let modalTarget = "list"; // "list" or "template"
 let addingToTarget = "list"; // Track if we're adding to list or template from the add view
+let isSheetOpen = false;
 
 // === Render Suggested Items ===
 function renderSuggested() {
@@ -151,7 +152,9 @@ function renderSuggested() {
     html += `<button class="suggested-chip" data-name="${product.name}" data-category="${product.category}" data-unit="${product.defaultUnit}">${product.name}</button>`;
   });
 
-  document.getElementById("suggested-items").innerHTML = html;
+  if (els.sheetSuggestedItems) {
+    els.sheetSuggestedItems.innerHTML = html;
+  }
 }
 
 // === DOM References ===
@@ -189,6 +192,25 @@ const els = {
   editCategory: document.getElementById("edit-category"),
   editSave: document.getElementById("edit-save"),
   editCancel: document.getElementById("edit-cancel"),
+  fabAdd: document.getElementById("fab-add"),
+  sheetOverlay: document.getElementById("sheet-overlay"),
+  bottomSheet: document.getElementById("bottom-sheet"),
+  sheetClose: document.getElementById("sheet-close"),
+  sheetTitle: document.getElementById("sheet-title"),
+  sheetTemplateToggle: document.getElementById("sheet-template-toggle"),
+  sheetTemplateChevron: document.getElementById("sheet-template-chevron"),
+  sheetTemplateContent: document.getElementById("sheet-template-content"),
+  sheetTemplateEmpty: document.getElementById("sheet-template-empty"),
+  sheetTemplateList: document.getElementById("sheet-template-list"),
+  sheetAddAllTemplate: document.getElementById("sheet-add-all-template"),
+  sheetSearchInput: document.getElementById("sheet-search-input"),
+  sheetCatalog: document.getElementById("sheet-catalog"),
+  sheetSuggestedItems: document.getElementById("sheet-suggested-items"),
+  sheetAddCustomBtn: document.getElementById("sheet-add-custom-btn"),
+  sheetCustomForm: document.getElementById("sheet-custom-form"),
+  sheetCustomName: document.getElementById("sheet-custom-name"),
+  sheetCustomCategory: document.getElementById("sheet-custom-category"),
+  sheetCustomSubmit: document.getElementById("sheet-custom-submit"),
 };
 
 // === Sync Status ===
@@ -335,7 +357,7 @@ function renderCatalog(filter) {
     }
   }
 
-  els.catalog.innerHTML = html;
+  els.sheetCatalog.innerHTML = html;
 }
 
 // === Amount Modal ===
@@ -507,7 +529,6 @@ function addItemToList(name, category, unit, amount) {
   }
 
   saveShoppingList();
-  switchTab("list");
 }
 
 function addCustomProductToCatalog(name, unit, category) {
@@ -552,7 +573,59 @@ function addAllTemplateToList() {
   templateList.forEach(item => {
     addItemToList(item.name, item.category, item.unit, item.amount);
   });
-  switchTab("list");
+  closeSheet();
+}
+
+// === Bottom Sheet ===
+function openSheet(target = "list") {
+  addingToTarget = target;
+  els.sheetTitle.textContent = target === "template" ? "הוספה לתבנית" : "הוספת מוצרים";
+  els.sheetSearchInput.value = "";
+  renderCatalog("");
+  renderSuggested();
+  renderSheetTemplate();
+  els.sheetOverlay.classList.remove("hidden");
+  requestAnimationFrame(() => els.bottomSheet.classList.add("open"));
+  isSheetOpen = true;
+  document.body.style.overflow = "hidden";
+}
+
+function closeSheet() {
+  els.bottomSheet.classList.remove("open");
+  const handleTransitionEnd = () => {
+    els.sheetOverlay.classList.add("hidden");
+    document.body.style.overflow = "";
+    addingToTarget = "list";
+    isSheetOpen = false;
+    els.bottomSheet.removeEventListener("transitionend", handleTransitionEnd);
+  };
+  els.bottomSheet.addEventListener("transitionend", handleTransitionEnd, { once: true });
+}
+
+function renderSheetTemplate() {
+  const hasItems = templateList.length > 0;
+  els.sheetTemplateEmpty.classList.toggle("hidden", hasItems);
+  els.sheetAddAllTemplate.classList.toggle("hidden", !hasItems);
+  if (!hasItems) {
+    els.sheetTemplateList.innerHTML = "";
+    return;
+  }
+  els.sheetTemplateList.innerHTML = templateList.map(item => `
+    <li class="list-item" data-id="${item.id}">
+      <span class="item-name">${item.name}</span>
+      <span class="item-amount">${formatAmount(item.amount, item.unit)}</span>
+    </li>
+  `).join("");
+}
+
+function submitSheetCustomItem() {
+  const name = els.sheetCustomName.value.trim();
+  if (!name) return;
+  const category = els.sheetCustomCategory.value || "שונות";
+  els.sheetCustomName.value = "";
+  els.sheetCustomForm.classList.add("hidden");
+  addCustomProductToCatalog(name, "units", category);
+  openAmountModal(name, "units", category, null, addingToTarget);
 }
 
 function removeItem(id) {
@@ -586,19 +659,13 @@ function switchTab(tabName) {
   });
 
   els.listView.classList.toggle("active", tabName === "list");
-  els.addView.classList.toggle("active", tabName === "add");
   els.templateView.classList.toggle("active", tabName === "template");
-
-  // Reset addingToTarget when leaving add view
-  if (tabName !== "add") {
-    addingToTarget = "list";
-  }
 }
 
 // === Event Listeners ===
 function attachEventListeners() {
-  // Populate category select
-  els.customCategory.innerHTML = CATEGORY_ORDER.map(cat =>
+  // Populate category selects
+  els.sheetCustomCategory.innerHTML = CATEGORY_ORDER.map(cat =>
     `<option value="${cat}">${cat}</option>`
   ).join("");
 
@@ -606,6 +673,9 @@ function attachEventListeners() {
   document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
+
+  // FAB
+  els.fabAdd.addEventListener("click", () => openSheet("list"));
 
   // Shopping list — event delegation
   els.shoppingList.addEventListener("click", (e) => {
@@ -639,8 +709,7 @@ function attachEventListeners() {
 
   // Template actions
   els.addToTemplateBtn.addEventListener("click", () => {
-    addingToTarget = "template";
-    switchTab("add");
+    openSheet("template");
   });
 
   els.addAllTemplateBtn.addEventListener("click", addAllTemplateToList);
@@ -649,12 +718,80 @@ function attachEventListeners() {
   els.clearPurchased.addEventListener("click", clearPurchased);
   els.clearAll.addEventListener("click", clearAll);
 
-  // Search
-  els.searchInput.addEventListener("input", (e) => {
+  // Sheet search
+  els.sheetSearchInput.addEventListener("input", (e) => {
     renderCatalog(e.target.value);
   });
 
-  // Catalog — event delegation
+  // Sheet template toggle
+  els.sheetTemplateToggle.addEventListener("click", () => {
+    els.sheetTemplateContent.classList.toggle("hidden");
+    els.sheetTemplateChevron.classList.toggle("open");
+  });
+
+  // Sheet close
+  els.sheetOverlay.addEventListener("click", (e) => {
+    if (e.target === els.sheetOverlay) closeSheet();
+  });
+
+  els.sheetClose.addEventListener("click", closeSheet);
+
+  // Sheet add all template
+  els.sheetAddAllTemplate.addEventListener("click", addAllTemplateToList);
+
+  // Sheet suggested items — event delegation
+  els.sheetSuggestedItems.addEventListener("click", (e) => {
+    const chip = e.target.closest(".suggested-chip");
+    if (chip) {
+      openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category, null, addingToTarget);
+    }
+  });
+
+  // Sheet custom item
+  els.sheetAddCustomBtn.addEventListener("click", () => {
+    els.sheetCustomForm.classList.toggle("hidden");
+    if (!els.sheetCustomForm.classList.contains("hidden")) {
+      els.sheetCustomName.focus();
+    }
+  });
+
+  els.sheetCustomSubmit.addEventListener("click", submitSheetCustomItem);
+  els.sheetCustomName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitSheetCustomItem();
+  });
+
+  // Sheet catalog — event delegation
+  els.sheetCatalog.addEventListener("click", (e) => {
+    const header = e.target.closest(".category-header");
+    if (header) {
+      header.classList.toggle("open");
+      const items = header.nextElementSibling;
+      items.classList.toggle("open");
+      return;
+    }
+
+    const noResultsAdd = e.target.closest(".no-results-add");
+    if (noResultsAdd) {
+      const name = noResultsAdd.dataset.name;
+      els.sheetCustomName.value = name;
+      els.sheetCustomForm.classList.remove("hidden");
+      els.sheetCustomName.focus();
+      return;
+    }
+
+    const catalogItem = e.target.closest(".catalog-item");
+    if (!catalogItem) return;
+
+    if (e.target.closest(".catalog-item-add")) {
+      openAmountModal(catalogItem.dataset.name, catalogItem.dataset.unit, catalogItem.dataset.category, null, addingToTarget);
+    } else if (e.target.closest(".catalog-item-edit")) {
+      openEditModal(catalogItem.dataset.id);
+    } else if (e.target.closest(".catalog-item-remove")) {
+      removeCatalogProduct(catalogItem.dataset.id);
+    }
+  });
+
+  // Catalog — event delegation (old add-view — now hidden but keeping for safety)
   els.catalog.addEventListener("click", (e) => {
     const header = e.target.closest(".category-header");
     if (header) {
@@ -773,6 +910,7 @@ function setupFirebaseListeners() {
   templateRef.on("value", (snapshot) => {
     templateList = snapshot.val() || [];
     renderTemplate();
+    if (isSheetOpen) renderSheetTemplate();
   });
 
   // Connection status

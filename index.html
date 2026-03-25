@@ -11,7 +11,6 @@
     <h1>רשימת קניות <span id="sync-status" class="sync-status"></span></h1>
     <nav class="tabs">
       <button class="tab active" data-tab="list">הרשימה שלי <span id="badge" class="badge hidden">0</span></button>
-      <button class="tab" data-tab="add">הוספת מוצרים</button>
       <button class="tab" data-tab="template">תבנית</button>
     </nav>
   </header>
@@ -21,7 +20,7 @@
     <section id="list-view" class="view active">
       <div id="empty-state">
         <p>הרשימה ריקה</p>
-        <p>עברו ל"הוספת מוצרים" כדי להתחיל</p>
+        <p>לחצו על + כדי להוסיף מוצרים</p>
       </div>
       <ul id="shopping-list"></ul>
       <div id="list-actions" class="list-actions hidden">
@@ -98,6 +97,54 @@
       <div class="modal-actions">
         <button id="modal-confirm" class="btn-primary">הוסף לרשימה</button>
         <button id="modal-cancel" class="btn-secondary">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button id="fab-add" class="fab" aria-label="הוסף מוצר">+</button>
+
+  <!-- Bottom Sheet -->
+  <div id="sheet-overlay" class="sheet-overlay hidden">
+    <div id="bottom-sheet" class="bottom-sheet">
+      <div class="sheet-handle-bar"></div>
+      <div class="sheet-header">
+        <h2 id="sheet-title" class="sheet-title">הוספת מוצרים</h2>
+        <button id="sheet-close" class="sheet-close" aria-label="סגור">✕</button>
+      </div>
+      <div class="sheet-body">
+        <!-- Template section -->
+        <div id="sheet-template-section" class="sheet-template-section">
+          <button id="sheet-template-toggle" class="sheet-template-toggle">
+            <span>תבנית שבועית</span>
+            <span id="sheet-template-chevron" class="sheet-chevron">▼</span>
+          </button>
+          <div id="sheet-template-content" class="sheet-template-content hidden">
+            <div id="sheet-template-empty" class="sheet-template-empty hidden"><p>התבנית ריקה</p></div>
+            <ul id="sheet-template-list" class="sheet-template-list"></ul>
+            <button id="sheet-add-all-template" class="btn-primary sheet-add-all hidden">הוסף הכל לרשימה</button>
+          </div>
+        </div>
+
+        <!-- Suggested -->
+        <div class="suggested-section">
+          <h3 class="suggested-title">מוצרים נפוצים</h3>
+          <div id="sheet-suggested-items" class="suggested-items"></div>
+        </div>
+
+        <!-- Search -->
+        <input type="search" id="sheet-search-input" placeholder="חיפוש מוצר..." class="sheet-search">
+
+        <!-- Custom item -->
+        <button id="sheet-add-custom-btn" class="btn-custom">+ הוסף מוצר מותאם אישית</button>
+        <div id="sheet-custom-form" class="custom-form hidden">
+          <input type="text" id="sheet-custom-name" placeholder="שם המוצר...">
+          <select id="sheet-custom-category"></select>
+          <button id="sheet-custom-submit" class="btn-primary">הוסף</button>
+        </div>
+
+        <!-- Catalog -->
+        <div id="sheet-catalog"></div>
       </div>
     </div>
   </div>

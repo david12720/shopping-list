@@ -24,6 +24,7 @@ A real-time family shopping list web app with Hebrew RTL interface.
 ## Usage
 
 1. Open the link on any device
-2. Go to **"הוספת מוצרים"** to add items from the catalog
-3. Use **"הרשימה שלי"** to view and check off items while shopping
-4. Share the link with family — everyone sees the same list in real-time
+2. Tap the **"+"** floating action button to add items from the catalog, search, or create custom items
+3. Use the **"הרשימה שלי"** tab to view and check off items while shopping
+4. Access the **"תבנית"** tab to create a weekly template for recurring items
+5. Share the link with family — everyone sees the same list in real-time
