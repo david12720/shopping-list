@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>רשימת קניות</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>רשימת קניות</h1>
+    <nav class="tabs">
+      <button class="tab active" data-tab="list">הרשימה שלי <span id="badge" class="badge hidden">0</span></button>
+      <button class="tab" data-tab="add">הוספת מוצרים</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- View 1: Shopping List -->
+    <section id="list-view" class="view active">
+      <div id="empty-state">
+        <p>הרשימה ריקה</p>
+        <p>עברו ל"הוספת מוצרים" כדי להתחיל</p>
+      </div>
+      <ul id="shopping-list"></ul>
+      <div id="list-actions" class="list-actions hidden">
+        <button id="clear-purchased" class="btn-secondary">מחק מסומנים</button>
+        <button id="clear-all" class="btn-danger">נקה הכל</button>
+      </div>
+    </section>
+
+    <!-- View 2: Add Products -->
+    <section id="add-view" class="view">
+      <input type="search" id="search-input" placeholder="חיפוש מוצר...">
+      <button id="add-custom-btn" class="btn-custom">+ הוסף מוצר מותאם אישית</button>
+      <div id="custom-form" class="custom-form hidden">
+        <input type="text" id="custom-name" placeholder="שם המוצר...">
+        <button id="custom-submit" class="btn-primary">הוסף</button>
+      </div>
+      <div id="catalog"></div>
+    </section>
+  </main>
+
+  <!-- Amount Selection Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="modal-product-name"></h3>
+      <div class="unit-toggle">
+        <button class="unit-btn active" data-unit="units">יחידות</button>
+        <button class="unit-btn" data-unit="kg">ק"ג</button>
+      </div>
+      <div class="amount-control">
+        <button id="amount-minus" class="amount-btn">-</button>
+        <input type="number" id="amount-input" value="1" min="0.1" step="1">
+        <button id="amount-plus" class="amount-btn">+</button>
+      </div>
+      <div class="modal-actions">
+        <button id="modal-confirm" class="btn-primary">הוסף לרשימה</button>
+        <button id="modal-cancel" class="btn-secondary">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
