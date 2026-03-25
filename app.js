@@ -282,13 +282,16 @@ function renderListItem(item) {
 // === Render Template ===
 function renderTemplate() {
   const hasItems = templateList.length > 0;
-  els.templateEmptyState.classList.toggle("hidden", hasItems);
-  els.addAllTemplateBtn.classList.toggle("hidden", !hasItems);
 
   if (!hasItems) {
     els.templateList.innerHTML = "";
+    els.templateEmptyState.classList.remove("hidden");
+    els.addAllTemplateBtn.classList.add("hidden");
     return;
   }
+
+  els.templateEmptyState.classList.add("hidden");
+  els.addAllTemplateBtn.classList.remove("hidden");
 
   let html = "";
   templateList.forEach(item => {
@@ -368,6 +371,9 @@ function openAmountModal(name, defaultUnit, category, itemId, target = "list") {
   els.modalProductName.textContent = name;
   setUnit(defaultUnit);
 
+  // Update button text based on edit vs add
+  els.modalConfirm.textContent = itemId ? "עדכן" : "הוסף לרשימה";
+
   if (itemId) {
     // Editing existing item — pre-fill amount
     const list = target === "template" ? templateList : shoppingList;
@@ -444,6 +450,10 @@ function confirmModal() {
     } else {
       // Add new item to template
       addItemToTemplate(modalContext.name, modalContext.category, unit, amount);
+      // Close sheet after adding to template (no multi-add for template)
+      closeModal();
+      closeSheet();
+      return;
     }
   } else {
     if (listItemEditId) {
@@ -571,7 +581,11 @@ function removeTemplateItem(id) {
 function addAllTemplateToList() {
   if (templateList.length === 0) return;
   templateList.forEach(item => {
-    addItemToList(item.name, item.category, item.unit, item.amount);
+    // Skip if item already exists in unpurchased list
+    const exists = shoppingList.some(i => i.name === item.name && !i.purchased);
+    if (!exists) {
+      addItemToList(item.name, item.category, item.unit, item.amount);
+    }
   });
   closeSheet();
 }
@@ -604,12 +618,14 @@ function closeSheet() {
 
 function renderSheetTemplate() {
   const hasItems = templateList.length > 0;
-  els.sheetTemplateEmpty.classList.toggle("hidden", hasItems);
-  els.sheetAddAllTemplate.classList.toggle("hidden", !hasItems);
   if (!hasItems) {
     els.sheetTemplateList.innerHTML = "";
+    els.sheetTemplateEmpty.classList.remove("hidden");
+    els.sheetAddAllTemplate.classList.add("hidden");
     return;
   }
+  els.sheetTemplateEmpty.classList.add("hidden");
+  els.sheetAddAllTemplate.classList.remove("hidden");
   els.sheetTemplateList.innerHTML = templateList.map(item => `
     <li class="list-item" data-id="${item.id}">
       <span class="item-name">${item.name}</span>
@@ -674,8 +690,12 @@ function attachEventListeners() {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
 
-  // FAB
-  els.fabAdd.addEventListener("click", () => openSheet("list"));
+  // FAB — context-aware based on active tab
+  els.fabAdd.addEventListener("click", () => {
+    const activeTab = document.querySelector(".tab.active");
+    const target = activeTab && activeTab.dataset.tab === "template" ? "template" : "list";
+    openSheet(target);
+  });
 
   // Shopping list — event delegation
   els.shoppingList.addEventListener("click", (e) => {
@@ -738,6 +758,17 @@ function attachEventListeners() {
 
   // Sheet add all template
   els.sheetAddAllTemplate.addEventListener("click", addAllTemplateToList);
+
+  // Sheet template items — event delegation (add individual items to list)
+  els.sheetTemplateList.addEventListener("click", (e) => {
+    const li = e.target.closest(".list-item");
+    if (!li) return;
+    const id = li.dataset.id;
+    const item = templateList.find(i => i.id === id);
+    if (item) {
+      openAmountModal(item.name, item.unit, item.category, null, "list");
+    }
+  });
 
   // Sheet suggested items — event delegation
   els.sheetSuggestedItems.addEventListener("click", (e) => {

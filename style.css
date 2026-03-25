@@ -233,6 +233,10 @@ main {
   color: var(--text-muted);
 }
 
+#template-empty-state.hidden {
+  display: none;
+}
+
 #template-empty-state p:first-child {
   font-size: 1.3rem;
   margin-bottom: 8px;
