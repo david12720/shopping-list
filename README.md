@@ -8,7 +8,7 @@ A real-time family shopping list web app with Hebrew RTL interface.
 
 - **Shared real-time list** — powered by Firebase, all family members see changes instantly
 - **65+ Israeli grocery products** organized in 8 categories
-- **Frequently bought** quick-pick chips for common items
+- **Frequently bought** qugyuyhor common items
 - **Editable catalog** — add, edit, or remove products from any device
 - **Custom items** — add your own products, saved to the shared catalog
 - **Mark as purchased** — check off items while shopping (strikethrough + moved to bottom)
