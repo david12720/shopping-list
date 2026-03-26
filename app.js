@@ -114,6 +114,7 @@ let shoppingList = [];
 let catalog = [];
 let templateList = [];
 let customCategories = [];
+const collapsedCategories = new Set();
 
 // === Firebase Data Helpers ===
 function saveShoppingList() {
@@ -299,8 +300,27 @@ function renderShoppingList() {
 
   let html = "";
 
+  // Group unpurchased items by category
+  const categoryOrder = {};
   unpurchased.forEach(item => {
-    html += renderListItem(item);
+    const cat = item.category || "כללי";
+    if (!categoryOrder[cat]) categoryOrder[cat] = [];
+    categoryOrder[cat].push(item);
+  });
+
+  Object.entries(categoryOrder).forEach(([category, items]) => {
+    const collapsed = collapsedCategories.has(category);
+    const arrow = collapsed ? "◂" : "▾";
+    html += `<li class="list-category-header${collapsed ? " collapsed" : ""}" data-category="${category}">
+      <span class="category-toggle">${arrow}</span>
+      <span>${category}</span>
+      <span class="category-count">${items.length}</span>
+    </li>`;
+    if (!collapsed) {
+      items.forEach(item => {
+        html += renderListItem(item);
+      });
+    }
   });
 
   if (purchased.length > 0 && unpurchased.length > 0) {
@@ -749,6 +769,18 @@ function attachEventListeners() {
 
   // Shopping list — event delegation
   els.shoppingList.addEventListener("click", (e) => {
+    const categoryHeader = e.target.closest(".list-category-header");
+    if (categoryHeader) {
+      const category = categoryHeader.dataset.category;
+      if (collapsedCategories.has(category)) {
+        collapsedCategories.delete(category);
+      } else {
+        collapsedCategories.add(category);
+      }
+      renderShoppingList();
+      return;
+    }
+
     const li = e.target.closest(".list-item");
     if (!li) return;
     const id = li.dataset.id;
