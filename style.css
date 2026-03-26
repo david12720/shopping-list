@@ -189,6 +189,24 @@ main {
   border-bottom-color: var(--primary);
 }
 
+.item-add-to-list {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 1.4rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.item-add-to-list:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
 .item-delete {
   background: none;
   border: none;

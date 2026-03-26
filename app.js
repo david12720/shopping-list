@@ -15,6 +15,7 @@ const db = firebase.database();
 let listRef = db.ref("shoppingList");
 let catalogRef = db.ref("catalog");
 let templateRef = db.ref("templateList");
+let categoriesRef = db.ref("customCategories");
 
 // === Initial Default Products (used to seed Firebase on first run) ===
 const SEED_PRODUCTS = [
@@ -112,6 +113,7 @@ const SUGGESTED_NAMES = [
 let shoppingList = [];
 let catalog = [];
 let templateList = [];
+let customCategories = [];
 
 // === Firebase Data Helpers ===
 function saveShoppingList() {
@@ -124,6 +126,52 @@ function saveCatalog() {
 
 function saveTemplate() {
   templateRef.set(templateList);
+}
+
+function saveCustomCategories() {
+  categoriesRef.set(customCategories);
+}
+
+// === Category Helpers ===
+function getAllCategories() {
+  const base = CATEGORY_ORDER.filter(c => c !== "שונות");
+  return [...base, ...customCategories, "שונות"];
+}
+
+function refreshCategorySelects(selectedValues = {}) {
+  const all = getAllCategories();
+  const opts = all.map(cat => `<option value="${cat}">${cat}</option>`).join("")
+    + `<option value="__new__">+ קטגוריה חדשה...</option>`;
+
+  [els.customCategory, els.sheetCustomCategory].forEach(el => {
+    const prev = selectedValues[el.id] || el.value;
+    el.innerHTML = opts;
+    if (all.includes(prev)) el.value = prev;
+  });
+
+  const prevEdit = selectedValues["edit-category"] || els.editCategory.value;
+  els.editCategory.innerHTML = opts;
+  if (all.includes(prevEdit)) els.editCategory.value = prevEdit;
+}
+
+function addCustomCategory(name) {
+  const trimmed = name.trim();
+  if (!trimmed || customCategories.includes(trimmed) || CATEGORY_ORDER.includes(trimmed)) return trimmed;
+  customCategories.push(trimmed);
+  saveCustomCategories();
+  refreshCategorySelects();
+  return trimmed;
+}
+
+function handleCategoryChange(selectEl) {
+  if (selectEl.value !== "__new__") return;
+  const name = prompt("שם הקטגוריה החדשה:");
+  if (name && name.trim()) {
+    const cat = addCustomCategory(name);
+    selectEl.value = cat;
+  } else {
+    selectEl.value = getAllCategories()[0];
+  }
 }
 
 // === Utility ===
@@ -299,6 +347,7 @@ function renderTemplate() {
       <li class="list-item" data-id="${item.id}">
         <span class="item-name">${item.name}</span>
         <span class="item-amount item-amount-edit">${formatAmount(item.amount, item.unit)}</span>
+        <button class="item-add-to-list" title="הוסף לרשימה">+</button>
         <button class="item-delete" title="מחק">✕</button>
       </li>
     `;
@@ -323,7 +372,7 @@ function renderCatalog(filter) {
   let html = "";
   let hasResults = false;
 
-  CATEGORY_ORDER.forEach(cat => {
+  getAllCategories().forEach(cat => {
     const items = grouped[cat];
     if (!items || items.length === 0) return;
     hasResults = true;
@@ -481,9 +530,7 @@ function openEditModal(productId) {
   els.editName.value = product.name;
 
   // Populate category dropdown
-  els.editCategory.innerHTML = CATEGORY_ORDER.map(cat =>
-    `<option value="${cat}" ${cat === product.category ? "selected" : ""}>${cat}</option>`
-  ).join("");
+  refreshCategorySelects({ "edit-category": product.category });
 
   // Set unit
   document.querySelectorAll(".edit-unit-btn").forEach(btn => {
@@ -681,9 +728,12 @@ function switchTab(tabName) {
 // === Event Listeners ===
 function attachEventListeners() {
   // Populate category selects
-  els.sheetCustomCategory.innerHTML = CATEGORY_ORDER.map(cat =>
-    `<option value="${cat}">${cat}</option>`
-  ).join("");
+  refreshCategorySelects();
+
+  // Handle "new category" option in all category selects
+  [els.customCategory, els.sheetCustomCategory, els.editCategory].forEach(el => {
+    el.addEventListener("change", () => handleCategoryChange(el));
+  });
 
   // Tab clicks
   document.querySelectorAll(".tab").forEach(tab => {
@@ -722,6 +772,8 @@ function attachEventListeners() {
 
     if (e.target.classList.contains("item-delete")) {
       removeTemplateItem(id);
+    } else if (e.target.classList.contains("item-add-to-list") && item) {
+      openAmountModal(item.name, item.unit, item.category, null, "list");
     } else if (e.target.classList.contains("item-amount-edit") && item) {
       openAmountModal(item.name, item.unit, item.category, id, "template");
     }
@@ -942,6 +994,14 @@ function setupFirebaseListeners() {
     templateList = snapshot.val() || [];
     renderTemplate();
     if (isSheetOpen) renderSheetTemplate();
+  });
+
+  // Listen for custom categories changes
+  categoriesRef.on("value", (snapshot) => {
+    const val = snapshot.val();
+    customCategories = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+    refreshCategorySelects();
+    renderCatalog(els.sheetSearchInput.value);
   });
 
   // Connection status
