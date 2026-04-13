@@ -132,8 +132,8 @@ header h1 {
   font-weight: 700;
 }
 
-.badge.hidden {
-  display: none;
+.badge.hidden, .hidden {
+  display: none !important;
 }
 
 /* Main */
