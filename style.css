@@ -1241,6 +1241,23 @@ main {
   border-radius: 4px;
 }
 
+.member-remove {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px;
+  border-radius: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.member-remove:hover {
+  opacity: 1;
+  background: var(--danger-light);
+}
+
 .vertical {
   flex-direction: column;
 }

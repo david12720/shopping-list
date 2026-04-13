@@ -978,6 +978,14 @@ function attachEventListeners() {
   els.copyInviteCode.addEventListener("click", copyInviteCode);
   els.leaveGroupBtn.addEventListener("click", leaveGroup);
 
+  els.membersList.addEventListener("click", (e) => {
+    const removeBtn = e.target.closest(".member-remove");
+    if (removeBtn) {
+      const li = removeBtn.closest(".member-item");
+      if (li) removeMember(li.dataset.uid);
+    }
+  });
+
   els.settingsModal.addEventListener("click", (e) => {
     if (e.target === els.settingsModal) closeSettings();
   });
@@ -1130,19 +1138,42 @@ function saveGroupName() {
   db.ref(`groups/${currentGroupId}/name`).set(newName);
 }
 
-function updateMembersList(members) {
-  if (!members) return;
+function updateMembersList(group) {
+  if (!group || !group.members) return;
+  const isOwner = group.ownerId === currentUser.uid;
   let html = "";
-  Object.values(members).forEach(member => {
+  
+  Object.entries(group.members).forEach(([uid, member]) => {
+    const isMe = uid === currentUser.uid;
+    const canRemove = isOwner && !isMe;
+    
     html += `
-      <li class="member-item">
+      <li class="member-item" data-uid="${uid}">
         <img src="${member.photoURL || 'https://www.gravatar.com/avatar/0000?d=mp'}" class="member-avatar">
-        <span class="member-name">${member.name}</span>
+        <span class="member-name">${member.name}${isMe ? ' (אני)' : ''}</span>
         <span class="member-role">${member.role === 'owner' ? 'מנהל' : 'חבר'}</span>
+        ${canRemove ? `<button class="member-remove" title="הסר מהקבוצה">✕</button>` : ''}
       </li>
     `;
   });
   els.membersList.innerHTML = html;
+}
+
+function removeMember(uid) {
+  if (!currentGroupId || !uid) return;
+  
+  db.ref(`groups/${currentGroupId}/members/${uid}`).once("value").then(snapshot => {
+    const member = snapshot.val();
+    if (!member) return;
+    
+    if (!confirm(`להסיר את ${member.name} מהקבוצה?`)) return;
+
+    const updates = {};
+    updates[`/groups/${currentGroupId}/members/${uid}`] = null;
+    updates[`/users/${uid}/groupId`] = null;
+
+    db.ref().update(updates);
+  });
 }
 
 function openSettings() {
@@ -1184,7 +1215,7 @@ function setupFirebaseListeners() {
     
     els.groupNameInput.value = group.name;
     els.displayInviteCode.textContent = group.inviteCode;
-    updateMembersList(group.members);
+    updateMembersList(group);
   });
 
   // Listen for shopping list changes
