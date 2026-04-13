@@ -1219,10 +1219,11 @@ function setupFirebaseListeners() {
 
 // === Initialize ===
 document.addEventListener("DOMContentLoaded", () => {
-  attachEventListeners();
+  console.log("App initializing...");
   
   // Auth state listener
   auth.onAuthStateChanged(user => {
+    console.log("Auth state changed:", user ? user.email : "no user");
     if (user) {
       currentUser = user;
       els.userAvatar.src = user.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
@@ -1232,6 +1233,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const userGroupRef = db.ref(`users/${user.uid}/groupId`);
       userGroupRef.on("value", snapshot => {
         const groupId = snapshot.val();
+        console.log("User group ID:", groupId);
         if (groupId) {
           currentGroupId = groupId;
           els.loginView.classList.add("hidden");
@@ -1248,6 +1250,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     } else {
       // Not logged in
+      console.log("Showing login view");
       currentUser = null;
       currentGroupId = null;
       detachFirebaseListeners();
@@ -1256,4 +1259,6 @@ document.addEventListener("DOMContentLoaded", () => {
       els.appContainer.classList.add("hidden");
     }
   });
+
+  attachEventListeners();
 });
