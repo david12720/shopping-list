@@ -58,6 +58,12 @@ The app uses the following Firebase project:
 
 The configuration is hardcoded in `app.js` (lines 2-11) for simplicity.
 
+**Important for Authentication:**
+To allow Google Sign-in on a live domain (like GitHub Pages):
+1. In the Firebase Console, go to **Authentication > Settings > Authorized domains**
+2. Click **Add domain** and enter the live URL (e.g., `david12720.github.io`).
+3. Ensure the **Google** provider is enabled under **Authentication > Sign-in method**.
+
 ## Architecture Notes
 
 ### Components

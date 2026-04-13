@@ -20,8 +20,17 @@ A real-time family shopping list web app with Hebrew RTL interface.
 ## Tech Stack
 
 - HTML / CSS / JavaScript (no frameworks)
-- Firebase Realtime Database
+- Firebase Realtime Database & Authentication
 - GitHub Pages hosting
+
+## Firebase Setup for Deployment
+
+If you are deploying this app to your own domain (e.g., GitHub Pages), you **must** authorize the domain in Firebase to allow Google Sign-in:
+
+1. Go to the [Firebase Console](https://console.firebase.google.com/)
+2. Navigate to **Authentication** > **Settings** (or Sign-in method) > **Authorized domains**
+3. Click **Add domain** and enter your domain (e.g., `yourusername.github.io`)
+4. Ensure the **Google** provider is enabled under the **Sign-in method** tab.
 
 ## Usage
 
