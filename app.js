@@ -212,6 +212,7 @@ function renderSuggested() {
 // === DOM References ===
 const els = {
   // Auth Views
+  loadingView: document.getElementById("loading-view"),
   loginView: document.getElementById("login-view"),
   groupSelectionView: document.getElementById("group-selection-view"),
   appContainer: document.getElementById("app-container"),
@@ -1248,6 +1249,10 @@ document.addEventListener("DOMContentLoaded", () => {
       userGroupRef.on("value", snapshot => {
         const groupId = snapshot.val();
         console.log("User group ID:", groupId);
+        
+        // Hide loading as soon as we resolve the group state
+        els.loadingView.classList.add("hidden");
+        
         if (groupId) {
           currentGroupId = groupId;
           els.loginView.classList.add("hidden");
@@ -1268,6 +1273,9 @@ document.addEventListener("DOMContentLoaded", () => {
       currentUser = null;
       currentGroupId = null;
       detachFirebaseListeners();
+      
+      // Hide loading and show login
+      els.loadingView.classList.add("hidden");
       els.loginView.classList.remove("hidden");
       els.groupSelectionView.classList.add("hidden");
       els.appContainer.classList.add("hidden");
