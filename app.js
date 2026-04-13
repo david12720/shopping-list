@@ -233,6 +233,7 @@ const els = {
   groupNameInput: document.getElementById("group-name-input"),
   saveGroupName: document.getElementById("save-group-name"),
   displayInviteCode: document.getElementById("display-invite-code"),
+  refreshInviteCode: document.getElementById("refresh-invite-code"),
   copyInviteCode: document.getElementById("copy-invite-code"),
   membersList: document.getElementById("members-list"),
   leaveGroupBtn: document.getElementById("leave-group-btn"),
@@ -976,6 +977,7 @@ function attachEventListeners() {
   els.closeSettings.addEventListener("click", closeSettings);
   els.saveGroupName.addEventListener("click", saveGroupName);
   els.copyInviteCode.addEventListener("click", copyInviteCode);
+  els.refreshInviteCode.addEventListener("click", refreshInviteCode);
   els.leaveGroupBtn.addEventListener("click", leaveGroup);
 
   els.membersList.addEventListener("click", (e) => {
@@ -1195,6 +1197,20 @@ function copyInviteCode() {
   });
 }
 
+function refreshInviteCode() {
+  if (!currentGroupId || !confirm("האם אתה בטוח שברצונך להחליף את קוד ההזמנה? הקוד הישן יפסיק לעבוד.")) return;
+
+  const oldCode = els.displayInviteCode.textContent;
+  const newCode = AppUtils.generateInviteCode();
+
+  const updates = {};
+  updates[`groups/${currentGroupId}/inviteCode`] = newCode;
+  updates[`invites/${oldCode}`] = null;
+  updates[`invites/${newCode}`] = currentGroupId;
+
+  db.ref().update(updates);
+}
+
 // === Firebase Real-time Listeners ===
 function detachFirebaseListeners() {
   if (listRef) listRef.off();
@@ -1213,8 +1229,11 @@ function setupFirebaseListeners() {
     const group = snapshot.val();
     if (!group) return;
     
+    const isOwner = group.ownerId === currentUser.uid;
     els.groupNameInput.value = group.name;
     els.displayInviteCode.textContent = group.inviteCode;
+    els.refreshInviteCode.classList.toggle("hidden", !isOwner);
+    
     updateMembersList(group);
   });
 
