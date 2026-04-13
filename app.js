@@ -150,15 +150,12 @@ function refreshCategorySelects(selectedValues = {}) {
   const opts = all.map(cat => `<option value="${cat}">${cat}</option>`).join("")
     + `<option value="__new__">+ קטגוריה חדשה...</option>`;
 
-  [els.customCategory, els.sheetCustomCategory].forEach(el => {
+  [els.sheetCustomCategory, els.editCategory].forEach(el => {
+    if (!el) return;
     const prev = selectedValues[el.id] || el.value;
     el.innerHTML = opts;
     if (all.includes(prev)) el.value = prev;
   });
-
-  const prevEdit = selectedValues["edit-category"] || els.editCategory.value;
-  els.editCategory.innerHTML = opts;
-  if (all.includes(prevEdit)) els.editCategory.value = prevEdit;
 }
 
 function addCustomCategory(name) {
@@ -775,7 +772,8 @@ function attachEventListeners() {
   refreshCategorySelects();
 
   // Handle "new category" option in all category selects
-  [els.customCategory, els.sheetCustomCategory, els.editCategory].forEach(el => {
+  [els.sheetCustomCategory, els.editCategory].forEach(el => {
+    if (!el) return;
     el.addEventListener("change", () => handleCategoryChange(el));
   });
 
