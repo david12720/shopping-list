@@ -988,8 +988,10 @@ function signInWithGoogle() {
   return auth.signInWithPopup(provider).then(result => {
     console.log("Sign-in successful:", result.user.email);
   }).catch(err => {
-    console.error("Auth error:", err);
-    alert("שגיאה בהתחברות: " + err.message);
+    console.error("Auth error details:", err);
+    console.error("Auth error code:", err.code);
+    console.error("Auth error message:", err.message);
+    alert("שגיאה בהתחברות (" + err.code + "): " + err.message);
   });
 }
 
