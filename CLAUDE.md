@@ -7,10 +7,12 @@ A Hebrew shopping list application with real-time synchronization via Firebase, 
 - **Language**: Hebrew (RTL layout)
 - **Tech Stack**: Vanilla JavaScript, Firebase Realtime Database, HTML5, CSS3
 - **Architecture**: Flat structure, no build step — open `index.html` directly in browser
-- **State**: Real-time synced across clients via Firebase
+- **State**: Real-time synced across clients via Firebase (Google Sign-in + Shared Groups)
 
 ## Features
 
+- ✅ Google Sign-in for user identification
+- ✅ Create and join shared shopping groups via invite codes
 - ✅ Add items to shopping list with custom amounts and units (units / kg)
 - ✅ Edit item amounts directly from the list
 - ✅ Mark items as purchased (strikethrough)
@@ -108,15 +110,23 @@ The configuration is hardcoded in `app.js` (lines 2-11) for simplicity.
 
 ### Firebase Structure
 
+**New Structure (Multi-tenant with Groups)**
 ```
-{
-  "shoppingList": [
-    { id, name, category, unit, amount, purchased }
-  ],
-  "catalog": [
-    { id, name, category, defaultUnit }
-  ]
-}
+/users/{uid}:
+  name: "David"
+  groupId: "grp_abc123"
+
+/groups/{groupId}:
+  name: "המשפחה שלי"
+  ownerId: "{uid}"
+  inviteCode: "ABC123"
+  shoppingList: [...]
+  catalog: [...]
+  members:
+    {uid1}: { name, photoURL, role: "owner" }
+    {uid2}: { name, photoURL, role: "member" }
+
+/invites/{inviteCode}: "{groupId}"
 ```
 
 ## Development Notes

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(json|md|css\\)$\")",
+      "Bash(git:*)",
+      "Skill(commit)",
+      "Bash(node -c app.js)",
+      "Bash(npm test:*)"
+    ]
+  }
+}

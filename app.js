@@ -12,10 +12,16 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-let listRef = db.ref("shoppingList");
-let catalogRef = db.ref("catalog");
-let templateRef = db.ref("templateList");
-let categoriesRef = db.ref("customCategories");
+const auth = firebase.auth();
+
+let listRef;
+let catalogRef;
+let templateRef;
+let categoriesRef;
+let groupRef;
+
+let currentUser = null;
+let currentGroupId = null;
 
 // === Initial Default Products (used to seed Firebase on first run) ===
 const SEED_PRODUCTS = [
@@ -208,9 +214,34 @@ function renderSuggested() {
 
 // === DOM References ===
 const els = {
+  // Auth Views
+  loginView: document.getElementById("login-view"),
+  groupSelectionView: document.getElementById("group-selection-view"),
+  appContainer: document.getElementById("app-container"),
+  googleLoginBtn: document.getElementById("google-login-btn"),
+  selectionLogoutBtn: document.getElementById("selection-logout-btn"),
+  showCreateGroup: document.getElementById("show-create-group"),
+  joinInviteCode: document.getElementById("join-invite-code"),
+  joinGroupBtn: document.getElementById("join-group-btn"),
+  
+  // Header / User
+  userAvatar: document.getElementById("user-avatar"),
+  userName: document.getElementById("user-name"),
+  settingsBtn: document.getElementById("settings-btn"),
+  logoutBtn: document.getElementById("logout-btn"),
+  
+  // Settings Modal
+  settingsModal: document.getElementById("settings-modal"),
+  groupNameInput: document.getElementById("group-name-input"),
+  saveGroupName: document.getElementById("save-group-name"),
+  displayInviteCode: document.getElementById("display-invite-code"),
+  copyInviteCode: document.getElementById("copy-invite-code"),
+  membersList: document.getElementById("members-list"),
+  leaveGroupBtn: document.getElementById("leave-group-btn"),
+  closeSettings: document.getElementById("close-settings"),
+
   badge: document.getElementById("badge"),
   listView: document.getElementById("list-view"),
-  addView: document.getElementById("add-view"),
   templateView: document.getElementById("template-view"),
   emptyState: document.getElementById("empty-state"),
   templateEmptyState: document.getElementById("template-empty-state"),
@@ -219,13 +250,6 @@ const els = {
   listActions: document.getElementById("list-actions"),
   addToTemplateBtn: document.getElementById("add-to-template-btn"),
   addAllTemplateBtn: document.getElementById("add-all-template"),
-  searchInput: document.getElementById("search-input"),
-  catalog: document.getElementById("catalog"),
-  addCustomBtn: document.getElementById("add-custom-btn"),
-  customForm: document.getElementById("custom-form"),
-  customName: document.getElementById("custom-name"),
-  customCategory: document.getElementById("custom-category"),
-  customSubmit: document.getElementById("custom-submit"),
   modalOverlay: document.getElementById("modal-overlay"),
   modalProductName: document.getElementById("modal-product-name"),
   amountInput: document.getElementById("amount-input"),
@@ -906,56 +930,12 @@ function attachEventListeners() {
     }
   });
 
-  // Catalog — event delegation (old add-view — now hidden but keeping for safety)
-  els.catalog.addEventListener("click", (e) => {
-    const header = e.target.closest(".category-header");
-    if (header) {
-      header.classList.toggle("open");
-      const items = header.nextElementSibling;
-      items.classList.toggle("open");
-      return;
-    }
-
-    const noResultsAdd = e.target.closest(".no-results-add");
-    if (noResultsAdd) {
-      const name = noResultsAdd.dataset.name;
-      els.customName.value = name;
-      els.customForm.classList.remove("hidden");
-      els.customName.focus();
-      return;
-    }
-
-    const catalogItem = e.target.closest(".catalog-item");
-    if (!catalogItem) return;
-
-    if (e.target.closest(".catalog-item-add")) {
-      openAmountModal(catalogItem.dataset.name, catalogItem.dataset.unit, catalogItem.dataset.category, null, addingToTarget);
-    } else if (e.target.closest(".catalog-item-edit")) {
-      openEditModal(catalogItem.dataset.id);
-    } else if (e.target.closest(".catalog-item-remove")) {
-      removeCatalogProduct(catalogItem.dataset.id);
-    }
-  });
-
   // Suggested items — event delegation
-  document.getElementById("suggested-items").addEventListener("click", (e) => {
+  els.sheetSuggestedItems.addEventListener("click", (e) => {
     const chip = e.target.closest(".suggested-chip");
     if (chip) {
       openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category, null, addingToTarget);
     }
-  });
-
-  // Custom item
-  els.addCustomBtn.addEventListener("click", () => {
-    els.customForm.classList.toggle("hidden");
-    if (!els.customForm.classList.contains("hidden")) {
-      els.customName.focus();
-    }
-  });
-
-  els.customSubmit.addEventListener("click", submitCustomItem);
-  els.customName.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") submitCustomItem();
   });
 
   // Amount Modal
@@ -986,42 +966,235 @@ function attachEventListeners() {
 
   els.editSave.addEventListener("click", saveEditProduct);
   els.editCancel.addEventListener("click", closeEditModal);
+
+  // Auth & Groups
+  els.googleLoginBtn.addEventListener("click", signInWithGoogle);
+  els.selectionLogoutBtn.addEventListener("click", signOut);
+  els.logoutBtn.addEventListener("click", signOut);
+  els.showCreateGroup.addEventListener("click", createGroup);
+  els.joinGroupBtn.addEventListener("click", () => joinGroup(els.joinInviteCode.value));
+  els.settingsBtn.addEventListener("click", openSettings);
+  els.closeSettings.addEventListener("click", closeSettings);
+  els.saveGroupName.addEventListener("click", saveGroupName);
+  els.copyInviteCode.addEventListener("click", copyInviteCode);
+  els.leaveGroupBtn.addEventListener("click", leaveGroup);
+
+  els.settingsModal.addEventListener("click", (e) => {
+    if (e.target === els.settingsModal) closeSettings();
+  });
 }
 
-function submitCustomItem() {
-  const name = els.customName.value.trim();
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  return auth.signInWithPopup(provider).catch(err => {
+    console.error("Auth error:", err);
+    alert("שגיאה בהתחברות");
+  });
+}
+
+function signOut() {
+  if (currentUser) {
+    detachFirebaseListeners();
+  }
+  return auth.signOut();
+}
+
+function createGroup() {
+  const name = prompt("שם הקבוצה החדשה:", "המשפחה שלי");
   if (!name) return;
-  const category = els.customCategory.value || "שונות";
-  els.customName.value = "";
-  els.customForm.classList.add("hidden");
-  // Add to catalog first, then open amount modal
-  addCustomProductToCatalog(name, "units", category);
-  openAmountModal(name, "units", category);
+
+  const groupId = "grp_" + Date.now();
+  const inviteCode = AppUtils.generateInviteCode();
+  
+  const groupData = {
+    name: name,
+    ownerId: currentUser.uid,
+    inviteCode: inviteCode,
+    shoppingList: [],
+    catalog: [...SEED_PRODUCTS],
+    templateList: [],
+    customCategories: [],
+    members: {
+      [currentUser.uid]: {
+        name: currentUser.displayName,
+        email: currentUser.email,
+        photoURL: currentUser.photoURL,
+        role: "owner"
+      }
+    }
+  };
+
+  const updates = {};
+  updates[`/groups/${groupId}`] = groupData;
+  updates[`/invites/${inviteCode}`] = groupId;
+  updates[`/users/${currentUser.uid}/groupId`] = groupId;
+
+  db.ref().update(updates).then(() => {
+    migrateOldData(groupId);
+  });
+}
+
+function joinGroup(inviteCode) {
+  if (!inviteCode || inviteCode.length !== 6) {
+    alert("קוד הזמנה חייב להיות בן 6 תווים");
+    return;
+  }
+
+  inviteCode = inviteCode.toUpperCase();
+  db.ref(`invites/${inviteCode}`).once("value").then(snapshot => {
+    const groupId = snapshot.val();
+    if (!groupId) {
+      alert("קוד הזמנה לא תקין");
+      return;
+    }
+
+    const updates = {};
+    updates[`/groups/${groupId}/members/${currentUser.uid}`] = {
+      name: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL,
+      role: "member"
+    };
+    updates[`/users/${currentUser.uid}/groupId`] = groupId;
+
+    db.ref().update(updates);
+  });
+}
+
+function leaveGroup() {
+  if (!currentGroupId || !confirm("האם אתה בטוח שברצונך לעזוב את הקבוצה?")) return;
+
+  detachFirebaseListeners();
+  
+  const updates = {};
+  updates[`/users/${currentUser.uid}/groupId`] = null;
+  updates[`/groups/${currentGroupId}/members/${currentUser.uid}`] = null;
+
+  db.ref().update(updates).then(() => {
+    closeSettings();
+  });
+}
+
+function migrateOldData(groupId) {
+  db.ref("shoppingList").once("value").then(snapshot => {
+    const oldList = snapshot.val();
+    if (oldList) {
+      db.ref(`groups/${groupId}/shoppingList`).set(oldList);
+      db.ref("shoppingList").remove();
+    }
+  });
+
+  db.ref("catalog").once("value").then(snapshot => {
+    const oldCatalog = snapshot.val();
+    if (oldCatalog) {
+      db.ref(`groups/${groupId}/catalog`).set(oldCatalog);
+      db.ref("catalog").remove();
+    }
+  });
+  
+  db.ref("templateList").once("value").then(snapshot => {
+    const oldTemplate = snapshot.val();
+    if (oldTemplate) {
+      db.ref(`groups/${groupId}/templateList`).set(oldTemplate);
+      db.ref("templateList").remove();
+    }
+  });
+
+  db.ref("customCategories").once("value").then(snapshot => {
+    const oldCategories = snapshot.val();
+    if (oldCategories) {
+      db.ref(`groups/${groupId}/customCategories`).set(oldCategories);
+      db.ref("customCategories").remove();
+    }
+  });
+}
+
+function saveGroupName() {
+  const newName = els.groupNameInput.value.trim();
+  if (!newName || !currentGroupId) return;
+  db.ref(`groups/${currentGroupId}/name`).set(newName);
+}
+
+function updateMembersList(members) {
+  if (!members) return;
+  let html = "";
+  Object.values(members).forEach(member => {
+    html += `
+      <li class="member-item">
+        <img src="${member.photoURL || 'https://www.gravatar.com/avatar/0000?d=mp'}" class="member-avatar">
+        <span class="member-name">${member.name}</span>
+        <span class="member-role">${member.role === 'owner' ? 'מנהל' : 'חבר'}</span>
+      </li>
+    `;
+  });
+  els.membersList.innerHTML = html;
+}
+
+function openSettings() {
+  els.settingsModal.classList.remove("hidden");
+}
+
+function closeSettings() {
+  els.settingsModal.classList.add("hidden");
+}
+
+function copyInviteCode() {
+  const code = els.displayInviteCode.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = els.copyInviteCode.textContent;
+    els.copyInviteCode.textContent = "הועתק!";
+    setTimeout(() => {
+      els.copyInviteCode.textContent = originalText;
+    }, 2000);
+  });
 }
 
 // === Firebase Real-time Listeners ===
+function detachFirebaseListeners() {
+  if (listRef) listRef.off();
+  if (catalogRef) catalogRef.off();
+  if (templateRef) templateRef.off();
+  if (categoriesRef) categoriesRef.off();
+  if (groupRef) groupRef.off();
+}
+
 function setupFirebaseListeners() {
+  detachFirebaseListeners();
+
+  // Listen for group info
+  groupRef = db.ref(`groups/${currentGroupId}`);
+  groupRef.on("value", (snapshot) => {
+    const group = snapshot.val();
+    if (!group) return;
+    
+    els.groupNameInput.value = group.name;
+    els.displayInviteCode.textContent = group.inviteCode;
+    updateMembersList(group.members);
+  });
+
   // Listen for shopping list changes
+  listRef = db.ref(`groups/${currentGroupId}/shoppingList`);
   listRef.on("value", (snapshot) => {
     shoppingList = snapshot.val() || [];
     renderShoppingList();
   });
 
   // Listen for catalog changes
+  catalogRef = db.ref(`groups/${currentGroupId}/catalog`);
   catalogRef.on("value", (snapshot) => {
     const data = snapshot.val();
     if (data === null) {
-      // First run — seed the catalog
       catalog = [...SEED_PRODUCTS];
       saveCatalog();
     } else {
       catalog = data;
     }
-    renderCatalog(els.searchInput.value);
+    renderCatalog(els.sheetSearchInput.value);
     renderSuggested();
   });
 
   // Listen for template changes
+  templateRef = db.ref(`groups/${currentGroupId}/templateList`);
   templateRef.on("value", (snapshot) => {
     templateList = snapshot.val() || [];
     renderTemplate();
@@ -1029,6 +1202,7 @@ function setupFirebaseListeners() {
   });
 
   // Listen for custom categories changes
+  categoriesRef = db.ref(`groups/${currentGroupId}/customCategories`);
   categoriesRef.on("value", (snapshot) => {
     const val = snapshot.val();
     customCategories = Array.isArray(val) ? val : (val ? Object.values(val) : []);
@@ -1045,8 +1219,41 @@ function setupFirebaseListeners() {
 
 // === Initialize ===
 document.addEventListener("DOMContentLoaded", () => {
-  renderSuggested();
-  renderCatalog("");
   attachEventListeners();
-  setupFirebaseListeners();
+  
+  // Auth state listener
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      els.userAvatar.src = user.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
+      els.userName.textContent = user.displayName;
+      
+      // Look for group
+      const userGroupRef = db.ref(`users/${user.uid}/groupId`);
+      userGroupRef.on("value", snapshot => {
+        const groupId = snapshot.val();
+        if (groupId) {
+          currentGroupId = groupId;
+          els.loginView.classList.add("hidden");
+          els.groupSelectionView.classList.add("hidden");
+          els.appContainer.classList.remove("hidden");
+          setupFirebaseListeners();
+        } else {
+          // No group - show selection
+          els.loginView.classList.add("hidden");
+          els.groupSelectionView.classList.remove("hidden");
+          els.appContainer.classList.add("hidden");
+          detachFirebaseListeners();
+        }
+      });
+    } else {
+      // Not logged in
+      currentUser = null;
+      currentGroupId = null;
+      detachFirebaseListeners();
+      els.loginView.classList.remove("hidden");
+      els.groupSelectionView.classList.add("hidden");
+      els.appContainer.classList.add("hidden");
+    }
+  });
 });

@@ -6,7 +6,9 @@ A real-time family shopping list web app with Hebrew RTL interface.
 
 ## Features
 
-- **Shared real-time list** — powered by Firebase, all family members see changes instantly
+- **Google Sign-in** — secure personal identification
+- **Shared Groups** — create a group and invite family members via code
+- **Shared real-time list** — everyone in the group sees changes instantly
 - **65+ Israeli grocery products** organized in 8 categories
 - **Frequently bought** quick-pick chips for common items
 - **Editable catalog** — add, edit, or remove products from any device
@@ -23,8 +25,9 @@ A real-time family shopping list web app with Hebrew RTL interface.
 
 ## Usage
 
-1. Open the link on any device
-2. Tap the **"+"** floating action button to add items from the catalog, search, or create custom items
-3. Use the **"הרשימה שלי"** tab to view and check off items while shopping
-4. Access the **"תבנית"** tab to create a weekly template for recurring items
-5. Share the link with family — everyone sees the same list in real-time
+1. Open the app and **Sign in with Google**
+2. **Create a new group** or **Join an existing one** using an invite code
+3. Tap the **"+"** floating action button to add items from the catalog, search, or create custom items
+4. Use the **"הרשימה שלי"** tab to view and check off items while shopping
+5. Access the **"תבנית שבועית"** tab to create a weekly template for recurring items
+6. Share your group's **Invite Code** with family to collaborate on the same list

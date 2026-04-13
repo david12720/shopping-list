@@ -42,4 +42,24 @@ describe('AppUtils', () => {
       expect(AppUtils.formatAmount(50.5, 'kg')).toBe('50.5 ק"ג');
     });
   });
+
+  describe('generateInviteCode', () => {
+    it('should return a 6-character string', () => {
+      expect(AppUtils.generateInviteCode()).toHaveLength(6);
+    });
+
+    it('should only contain allowed characters', () => {
+      const allowed = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const code = AppUtils.generateInviteCode();
+      for (const char of code) {
+        expect(allowed).toContain(char);
+      }
+    });
+
+    it('should be reasonably random', () => {
+      const code1 = AppUtils.generateInviteCode();
+      const code2 = AppUtils.generateInviteCode();
+      expect(code1).not.toBe(code2);
+    });
+  });
 });
