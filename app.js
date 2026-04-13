@@ -985,10 +985,13 @@ function attachEventListeners() {
 }
 
 function signInWithGoogle() {
+  console.log("Starting Google Sign-in...");
   const provider = new firebase.auth.GoogleAuthProvider();
-  return auth.signInWithPopup(provider).catch(err => {
+  return auth.signInWithPopup(provider).then(result => {
+    console.log("Sign-in successful:", result.user.email);
+  }).catch(err => {
     console.error("Auth error:", err);
-    alert("שגיאה בהתחברות");
+    alert("שגיאה בהתחברות: " + err.message);
   });
 }
 
