@@ -985,13 +985,24 @@ function attachEventListeners() {
 function signInWithGoogle() {
   console.log("Starting Google Sign-in...");
   const provider = new firebase.auth.GoogleAuthProvider();
+  // Force the account selector to appear every time
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
+
   return auth.signInWithPopup(provider).then(result => {
     console.log("Sign-in successful:", result.user.email);
   }).catch(err => {
-    console.error("Auth error details:", err);
-    console.error("Auth error code:", err.code);
-    console.error("Auth error message:", err.message);
-    alert("שגיאה בהתחברות (" + err.code + "): " + err.message);
+    console.error("Auth Error Full Object:", err);
+    console.error("Error Code:", err.code);
+    
+    if (err.code === 'auth/unauthorized-domain') {
+      alert("שגיאה: הדומיין הזה לא מאושר בפיירבייס. יש להוסיף את david12720.github.io ב-Authorized Domains.");
+    } else if (err.code === 'auth/operation-not-allowed') {
+      alert("שגיאה: Google Sign-in לא מופעל בפיירבייס.");
+    } else {
+      alert("שגיאה בהתחברות (" + err.code + "): " + err.message);
+    }
   });
 }
 
