@@ -813,7 +813,7 @@ main {
 .fab {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  right: 24px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -841,7 +841,9 @@ main {
 }
 
 .fab-ai {
-  bottom: 96px;
+  right: auto;
+  left: 24px;
+  bottom: 24px;
   background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
   font-size: 1.4rem;
 }
