@@ -20,7 +20,11 @@ const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
  * AI Shopping List Parser
  * Takes natural language Hebrew text and extracts items based on the user's catalog.
  */
-exports.processShoppingRequest = onCall({ secrets: [GEMINI_API_KEY] }, async (request) => {
+exports.processShoppingRequest = onCall({ 
+  secrets: [GEMINI_API_KEY],
+  cors: true,
+  region: 'us-central1'
+}, async (request) => {
   // 1. Basic security check (only logged in users can use your AI credits)
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Please sign in first.");
@@ -60,28 +64,40 @@ exports.processShoppingRequest = onCall({ secrets: [GEMINI_API_KEY] }, async (re
   try {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    const usage = result.usageMetadata || result.response.usageMetadata;
+    
+    // Safely extract usage metadata
+    let usage = null;
+    try {
+      usage = result.usageMetadata || (result.response && result.response.usageMetadata);
+    } catch (e) {
+      console.warn("Could not extract usage metadata:", e);
+    }
 
     // Log cost to /admin/ai_costs
-    if (usage) {
-      const inputCost = (usage.promptTokenCount / 1_000_000) * 0.10;
-      const outputCost = (usage.candidatesTokenCount / 1_000_000) * 0.40;
-      const totalCost = inputCost + outputCost;
+    if (usage && usage.promptTokenCount !== undefined) {
+      try {
+        const inputCost = (usage.promptTokenCount / 1_000_000) * 0.10;
+        const outputCost = ((usage.candidatesTokenCount || 0) / 1_000_000) * 0.40;
+        const totalCost = inputCost + outputCost;
 
-      await admin.database().ref("/admin/ai_costs").push({
-        timestamp: admin.database.ServerValue.TIMESTAMP,
-        uid: request.auth.uid,
-        inputTokens: usage.promptTokenCount,
-        outputTokens: usage.candidatesTokenCount,
-        totalTokens: usage.totalTokenCount,
-        cost: totalCost,
-        inputTextLength: text.length
-      });
+        await admin.database().ref("/admin/ai_costs").push({
+          timestamp: admin.database.ServerValue.TIMESTAMP,
+          uid: request.auth.uid,
+          inputTokens: usage.promptTokenCount,
+          outputTokens: usage.candidatesTokenCount || 0,
+          totalTokens: usage.totalTokenCount || usage.promptTokenCount,
+          cost: totalCost,
+          inputTextLength: text.length
+        });
+      } catch (logError) {
+        console.error("Failed to log AI cost:", logError);
+        // Don't fail the whole request just because logging failed
+      }
     }
 
     return JSON.parse(responseText);
   } catch (error) {
     console.error("AI processing failed:", error);
-    throw new HttpsError("internal", "Failed to process request with AI: " + error.message);
+    throw new HttpsError("internal", error.message || "Failed to process request with AI");
   }
 });
