@@ -177,7 +177,11 @@ const AppController = (() => {
     const unit = aiItem.unit || product.defaultUnit;
 
     if (existing) {
-      existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+      if (confirm(`"${product.name}" כבר נמצא ברשימה. להוסיף לכמות הקיימת?`)) {
+        existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+      } else {
+        return null; // Skip this item
+      }
     } else {
       shoppingList.push({
         id: "item_" + Date.now() + Math.random().toString(36).substr(2, 5),
@@ -395,7 +399,12 @@ const AppController = (() => {
       } else {
         const existing = shoppingList.find(i => i.name === modalContext.name && !i.purchased);
         if (existing) {
-          existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+          if (confirm(`"${modalContext.name}" כבר נמצא ברשימה. להוסיף לכמות הקיימת?`)) {
+            existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+          } else {
+            closeModal();
+            return;
+          }
         } else {
           shoppingList.push({ id: "item_" + Date.now(), name: modalContext.name, category: modalContext.category, unit, amount, purchased: false });
         }
