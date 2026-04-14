@@ -17,9 +17,9 @@ const AppController = (() => {
     els.joinGroupBtn.addEventListener("click", () => handleJoinGroup(els.joinInviteCode.value));
 
     // Settings
-    els.settingsBtn.addEventListener("click", () => AppUI.showView("settings")); // Wait, settings is a modal
     els.settingsBtn.addEventListener("click", () => els.settingsModal.classList.remove("hidden"));
     els.closeSettings.addEventListener("click", () => els.settingsModal.classList.add("hidden"));
+    els.settingsModal.addEventListener("click", (e) => { if (e.target === els.settingsModal) els.settingsModal.classList.add("hidden"); });
     els.saveGroupName.addEventListener("click", handleSaveGroupName);
     els.refreshInviteCode.addEventListener("click", handleRefreshInviteCode);
     els.leaveGroupBtn.addEventListener("click", handleLeaveGroup);
