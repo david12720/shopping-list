@@ -174,7 +174,7 @@ const AppAPI = (() => {
       // If you switch to Vercel, you only change this URL or method.
       try {
         // Assuming your Firebase Function will be at this location:
-        const aiFunction = firebase.functions().httpsCallable('processShoppingRequest');
+        const aiFunction = firebase.functions('us-central1').httpsCallable('processShoppingRequest');
         const response = await aiFunction({ text, catalogNames });
         return response.data; // Should return { items: [{ name, amount, unit, category }] }
       } catch (error) {
