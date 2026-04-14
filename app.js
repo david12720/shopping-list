@@ -121,17 +121,34 @@ const AppController = (() => {
   }
 
   async function processAiItem(aiItem) {
-    const { catalog, shoppingList } = AppStore.getState();
+    const { catalog, shoppingList, customCategories } = AppStore.getState();
     let product = findProductByName(aiItem.name);
 
     if (!product) {
       const categories = AppStore.getAllCategories();
       const catList = categories.map((c, i) => `${i + 1}. ${c}`).join("\n");
-      const choice = prompt(`המוצר "${aiItem.name}" לא מוכר. באיזו קטגוריה הוא?\n${catList}`, "1");
+      const choice = prompt(`המוצר "${aiItem.name}" לא מוכר. באיזו קטגוריה הוא?\n${catList}\n${categories.length + 1}. + קטגוריה חדשה...`, "1");
       
       if (choice) {
-        const catIndex = parseInt(choice) - 1;
-        const category = categories[catIndex] || "שונות";
+        let category;
+        const index = parseInt(choice);
+        
+        if (index === categories.length + 1) {
+          const newCat = prompt("שם הקטגוריה החדשה:");
+          if (newCat && newCat.trim()) {
+            category = newCat.trim();
+            if (!customCategories.includes(category)) {
+              customCategories.push(category);
+              AppStore.setState({ customCategories });
+              saveCustomCategories();
+              AppUI.refreshCategorySelects();
+            }
+          } else {
+            category = "שונות";
+          }
+        } else {
+          category = categories[index - 1] || "שונות";
+        }
         
         product = {
           id: "p_" + Date.now() + Math.random().toString(36).substr(2, 5),
