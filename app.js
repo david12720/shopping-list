@@ -102,14 +102,20 @@ const AppController = (() => {
     if (!text || !text.trim()) return;
 
     AppUI.showAiLoading("מנתח את הבקשה שלך...");
-    
+
     try {
       const { catalog, shoppingList } = AppStore.getState();
       const response = await AppAPI.processNaturalLanguage(text, catalog);
-      
+
       if (response && response.items) {
+        const addedItems = [];
         for (const item of response.items) {
-          await processAiItem(item);
+          const result = await processAiItem(item);
+          if (result) addedItems.push(result);
+        }
+
+        if (addedItems.length > 0) {
+          alert(`${addedItems.join(", ")} נוספו לרשימה`);
         }
       }
     } catch (error) {
@@ -128,11 +134,11 @@ const AppController = (() => {
       const categories = AppStore.getAllCategories();
       const catList = categories.map((c, i) => `${i + 1}. ${c}`).join("\n");
       const choice = prompt(`המוצר "${aiItem.name}" לא מוכר. באיזו קטגוריה הוא?\n${catList}\n${categories.length + 1}. + קטגוריה חדשה...`, "1");
-      
+
       if (choice) {
         let category;
         const index = parseInt(choice);
-        
+
         if (index === categories.length + 1) {
           const newCat = prompt("שם הקטגוריה החדשה:");
           if (newCat && newCat.trim()) {
@@ -149,19 +155,19 @@ const AppController = (() => {
         } else {
           category = categories[index - 1] || "שונות";
         }
-        
+
         product = {
           id: "p_" + Date.now() + Math.random().toString(36).substr(2, 5),
           name: aiItem.name,
           category: category,
           defaultUnit: aiItem.unit || "units"
         };
-        
+
         catalog.push(product);
         AppStore.setState({ catalog });
         saveCatalog();
       } else {
-        return; // User cancelled this item
+        return null; // User cancelled this item
       }
     }
 
@@ -182,11 +188,13 @@ const AppController = (() => {
         purchased: false
       });
     }
-    
+
     AppStore.setState({ shoppingList });
     saveShoppingList();
-  }
 
+    // Return summary string
+    return `${amount > 1 ? amount + " " : ""}${product.name}`;
+  }
   function findProductByName(name) {
     const { catalog } = AppStore.getState();
     return catalog.find(p => p.name === name || p.name.includes(name) || name.includes(p.name));
