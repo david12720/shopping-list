@@ -37,6 +37,8 @@ const AppController = (() => {
       openSheet(target);
     });
 
+    els.fabAi.addEventListener("click", handleAiAdd);
+
     // Shopping List Actions
     els.shoppingList.addEventListener("click", handleListClick);
     els.clearPurchased.addEventListener("click", handleClearPurchased);
@@ -95,6 +97,84 @@ const AppController = (() => {
   }
 
   // === Handlers ===
+  async function handleAiAdd() {
+    const text = prompt("מה תרצו להוסיף לרשימה? (לדוגמה: 2 קילו עגבניות, חלב ושוקו)");
+    if (!text || !text.trim()) return;
+
+    AppUI.showAiLoading("מנתח את הבקשה שלך...");
+    
+    try {
+      const { catalog, shoppingList } = AppStore.getState();
+      const response = await AppAPI.processNaturalLanguage(text, catalog);
+      
+      if (response && response.items) {
+        for (const item of response.items) {
+          await processAiItem(item);
+        }
+      }
+    } catch (error) {
+      console.error("AI Error:", error);
+      alert("משהו השתבש בעיבוד הבקשה. נסו שוב מאוחר יותר.");
+    } finally {
+      AppUI.hideAiLoading();
+    }
+  }
+
+  async function processAiItem(aiItem) {
+    const { catalog, shoppingList } = AppStore.getState();
+    let product = findProductByName(aiItem.name);
+
+    if (!product) {
+      const categories = AppStore.getAllCategories();
+      const catList = categories.map((c, i) => `${i + 1}. ${c}`).join("\n");
+      const choice = prompt(`המוצר "${aiItem.name}" לא מוכר. באיזו קטגוריה הוא?\n${catList}`, "1");
+      
+      if (choice) {
+        const catIndex = parseInt(choice) - 1;
+        const category = categories[catIndex] || "שונות";
+        
+        product = {
+          id: "p_" + Date.now() + Math.random().toString(36).substr(2, 5),
+          name: aiItem.name,
+          category: category,
+          defaultUnit: aiItem.unit || "units"
+        };
+        
+        catalog.push(product);
+        AppStore.setState({ catalog });
+        saveCatalog();
+      } else {
+        return; // User cancelled this item
+      }
+    }
+
+    // Add to shopping list
+    const existing = shoppingList.find(i => i.name === product.name && !i.purchased);
+    const amount = aiItem.amount || 1;
+    const unit = aiItem.unit || product.defaultUnit;
+
+    if (existing) {
+      existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+    } else {
+      shoppingList.push({
+        id: "item_" + Date.now() + Math.random().toString(36).substr(2, 5),
+        name: product.name,
+        category: product.category,
+        unit: unit,
+        amount: amount,
+        purchased: false
+      });
+    }
+    
+    AppStore.setState({ shoppingList });
+    saveShoppingList();
+  }
+
+  function findProductByName(name) {
+    const { catalog } = AppStore.getState();
+    return catalog.find(p => p.name === name || p.name.includes(name) || name.includes(p.name));
+  }
+
   async function handleCreateGroup() {
     const name = prompt("שם הקבוצה החדשה:", "המשפחה שלי");
     if (!name) return;

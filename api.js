@@ -160,6 +160,29 @@ const AppAPI = (() => {
       });
     },
 
+    // AI & Natural Language
+    async processNaturalLanguage(text, catalog) {
+      // In a real scenario, we would send the catalog so the AI knows existing IDs.
+      // For now, we'll send a simplified version of the catalog names.
+      const catalogNames = catalog.map(p => p.name);
+      return this.callAiProxy(text, catalogNames);
+    },
+
+    async callAiProxy(text, catalogNames) {
+      // This is the "Pluggable" part. 
+      // Currently set up to call a Firebase Cloud Function.
+      // If you switch to Vercel, you only change this URL or method.
+      try {
+        // Assuming your Firebase Function will be at this location:
+        const aiFunction = firebase.functions().httpsCallable('processShoppingRequest');
+        const response = await aiFunction({ text, catalogNames });
+        return response.data; // Should return { items: [{ name, amount, unit, category }] }
+      } catch (error) {
+        console.error("AI Proxy Error:", error);
+        throw error;
+      }
+    },
+
     // Data Persistence
     saveShoppingList(groupId, data) {
       return db.ref(`groups/${groupId}/shoppingList`).set(data);

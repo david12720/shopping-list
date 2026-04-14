@@ -69,6 +69,11 @@ const AppUI = (() => {
 
     // FAB
     fabAdd: document.getElementById("fab-add"),
+    fabAi: document.getElementById("fab-ai"),
+
+    // AI Modal
+    aiModal: document.getElementById("ai-modal-overlay"),
+    aiStatus: document.getElementById("ai-status"),
 
     // Bottom Sheet
     sheetOverlay: document.getElementById("sheet-overlay"),
@@ -336,6 +341,15 @@ const AppUI = (() => {
       if (viewName === "login") els.loginView.classList.remove("hidden");
       if (viewName === "selection") els.groupSelectionView.classList.remove("hidden");
       if (viewName === "app") els.appContainer.classList.remove("hidden");
+    },
+
+    showAiLoading(statusText) {
+      els.aiStatus.textContent = statusText || "מפענח את הבקשה שלך...";
+      els.aiModal.classList.remove("hidden");
+    },
+
+    hideAiLoading() {
+      els.aiModal.classList.add("hidden");
     }
   };
 })();

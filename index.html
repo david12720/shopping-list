@@ -168,6 +168,16 @@
 
   <!-- FAB -->
   <button id="fab-add" class="fab" aria-label="הוסף מוצר">+</button>
+  <button id="fab-ai" class="fab fab-ai" aria-label="הוספה עם בינה מלאכותית">✨</button>
+
+  <!-- AI Modal -->
+  <div id="ai-modal-overlay" class="modal-overlay hidden">
+    <div class="modal ai-modal">
+      <div class="ai-loader"></div>
+      <h3>הבינה המלאכותית חושבת...</h3>
+      <p id="ai-status">מפענח את הבקשה שלך...</p>
+    </div>
+  </div>
 
   <!-- Bottom Sheet -->
   <div id="sheet-overlay" class="sheet-overlay hidden">
@@ -217,6 +227,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
   <script src="utils.js"></script>
   <script src="api.js"></script>
   <script src="store.js"></script>
