@@ -2,6 +2,11 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { defineSecret } = require('firebase-functions/params');
 const { setGlobalOptions } = require("firebase-functions/v2");
+const admin = require("firebase-admin");
+
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
 
 // Set global options to allow CORS from your specific domains
 setGlobalOptions({ 
@@ -30,7 +35,7 @@ exports.processShoppingRequest = onCall({ secrets: [GEMINI_API_KEY] }, async (re
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-1.5-flash",
     generationConfig: { responseMimeType: "application/json" }
   });
 
@@ -55,6 +60,25 @@ exports.processShoppingRequest = onCall({ secrets: [GEMINI_API_KEY] }, async (re
   try {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
+    const usage = result.usageMetadata || result.response.usageMetadata;
+
+    // Log cost to /admin/ai_costs
+    if (usage) {
+      const inputCost = (usage.promptTokenCount / 1_000_000) * 0.10;
+      const outputCost = (usage.candidatesTokenCount / 1_000_000) * 0.40;
+      const totalCost = inputCost + outputCost;
+
+      await admin.database().ref("/admin/ai_costs").push({
+        timestamp: admin.database.ServerValue.TIMESTAMP,
+        uid: request.auth.uid,
+        inputTokens: usage.promptTokenCount,
+        outputTokens: usage.candidatesTokenCount,
+        totalTokens: usage.totalTokenCount,
+        cost: totalCost,
+        inputTextLength: text.length
+      });
+    }
+
     return JSON.parse(responseText);
   } catch (error) {
     console.error("AI processing failed:", error);
