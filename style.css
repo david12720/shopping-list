@@ -573,25 +573,80 @@ main {
   flex-shrink: 0;
 }
 
-.catalog-item-add {
-  background: var(--primary);
-  color: white;
+.catalog-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  padding: 4px 8px;
+  border-radius: 20px;
+  margin-right: 12px;
+}
+
+.qty-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qty-input {
+  width: 38px;
   border: none;
-  width: 36px;
-  height: 36px;
+  background: transparent;
+  text-align: center;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--text);
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  font-size: 1.3rem;
-  cursor: pointer;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
   line-height: 1;
+  padding: 0;
 }
 
-.catalog-item-add:hover {
-  background: var(--primary-dark);
+.qty-btn:hover {
+  background: var(--border);
+}
+
+.catalog-unit-select {
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding-left: 4px;
+  border-left: 1px solid var(--border);
+  margin-left: 4px;
+}
+
+[dir="rtl"] .catalog-unit-select {
+  padding-left: 0;
+  padding-right: 4px;
+  border-left: none;
+  border-right: 1px solid var(--border);
+  margin-left: 0;
+  margin-right: 4px;
 }
 
 .catalog-item-edit,

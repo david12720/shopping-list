@@ -297,7 +297,16 @@ const AppController = (() => {
       AppStore.setState({ templateList: newList });
       saveTemplate();
     } else if (e.target.classList.contains("item-add-to-list") && item) {
-      openAmountModal(item.name, item.unit, item.category, null, "list");
+      if (addItemToList(item.name, item.amount, item.unit, item.category, null, "list")) {
+        const btn = e.target.closest(".item-add-to-list");
+        const originalText = btn.textContent;
+        btn.textContent = "✓";
+        btn.style.color = "#4CAF50";
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.color = "";
+        }, 1000);
+      }
     } else if (e.target.classList.contains("item-amount-edit") && item) {
       openAmountModal(item.name, item.unit, item.category, id, "template");
     }
@@ -305,7 +314,17 @@ const AppController = (() => {
 
   function handleSuggestedClick(e) {
     const chip = e.target.closest(".suggested-chip");
-    if (chip) openAmountModal(chip.dataset.name, chip.dataset.unit, chip.dataset.category, null, AppStore.getState().addingToTarget);
+    if (chip) {
+      const { name, unit, category } = chip.dataset;
+      const target = AppStore.getState().addingToTarget;
+      if (addItemToList(name, 1, unit, category, null, target)) {
+        const originalText = chip.textContent;
+        chip.textContent = "✓ " + originalText;
+        setTimeout(() => {
+          chip.textContent = originalText;
+        }, 1000);
+      }
+    }
   }
 
   function handleCatalogClick(e) {
@@ -324,18 +343,61 @@ const AppController = (() => {
       return;
     }
 
-    const item = e.target.closest(".catalog-item");
-    if (!item) return;
+    const itemEl = e.target.closest(".catalog-item");
+    if (!itemEl) return;
+
+    // Inline Quantity Controls
+    const qtyInput = itemEl.querySelector(".qty-input");
+    const unitSelect = itemEl.querySelector(".catalog-unit-select");
+
+    if (e.target.closest(".plus")) {
+      const step = parseFloat(qtyInput.step) || 1;
+      qtyInput.value = (parseFloat(qtyInput.value) + step).toFixed(step < 1 ? 1 : 0);
+      return;
+    }
+    if (e.target.closest(".minus")) {
+      const step = parseFloat(qtyInput.step) || 1;
+      const val = parseFloat(qtyInput.value) - step;
+      if (val >= parseFloat(qtyInput.min)) {
+        qtyInput.value = val.toFixed(step < 1 ? 1 : 0);
+      }
+      return;
+    }
+    if (e.target.closest(".catalog-unit-select")) {
+      const isKg = unitSelect.value === "kg";
+      qtyInput.step = isKg ? "0.1" : "1";
+      qtyInput.min = isKg ? "0.1" : "1";
+      if (!isKg) qtyInput.value = Math.max(1, Math.round(qtyInput.value));
+      return;
+    }
 
     if (e.target.closest(".catalog-item-add")) {
-      openAmountModal(item.dataset.name, item.dataset.unit, item.dataset.category, null, AppStore.getState().addingToTarget);
-    } else if (e.target.closest(".catalog-item-edit")) {
-      openEditModal(item.dataset.id);
+      const { name, category } = itemEl.dataset;
+      const amount = parseFloat(qtyInput.value) || 1;
+      const unit = unitSelect.value;
+      const target = AppStore.getState().addingToTarget;
+      
+      if (addItemToList(name, amount, unit, category, null, target)) {
+        const btn = e.target.closest(".catalog-item-add");
+        const originalText = btn.textContent;
+        btn.textContent = "✓";
+        const originalBg = btn.style.background;
+        btn.style.background = "#4CAF50";
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = originalBg;
+        }, 1000);
+      }
+      return;
+    }
+
+    if (e.target.closest(".catalog-item-edit")) {
+      openEditModal(itemEl.dataset.id);
     } else if (e.target.closest(".catalog-item-remove")) {
       const { catalog } = AppStore.getState();
-      const product = catalog.find(p => p.id === item.dataset.id);
+      const product = catalog.find(p => p.id === itemEl.dataset.id);
       if (confirm(`למחוק את "${product.name}"?`)) {
-        const newList = catalog.filter(p => p.id !== item.dataset.id);
+        const newList = catalog.filter(p => p.id !== itemEl.dataset.id);
         AppStore.setState({ catalog: newList });
         saveCatalog();
       }
@@ -376,44 +438,53 @@ const AppController = (() => {
     AppStore.setState({ modalContext: null, listItemEditId: null });
   }
 
+  function addItemToList(name, amount, unit, category, itemId, target) {
+    const { shoppingList, templateList } = AppStore.getState();
+    const list = target === "template" ? templateList : shoppingList;
+
+    if (itemId) {
+      const item = list.find(i => i.id === itemId);
+      if (item) { 
+        item.amount = amount; 
+        item.unit = unit; 
+      }
+    } else {
+      // In template, we allow duplicate names if they are different entries (no check)
+      // In shopping list, we check for non-purchased duplicates
+      const existing = (target === "template") ? null : list.find(i => i.name === name && !i.purchased);
+
+      if (existing) {
+        if (confirm(`"${name}" כבר נמצא ברשימה. להוסיף לכמות הקיימת?`)) {
+          existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+        } else {
+          return false;
+        }
+      } else {
+        const id = (target === "template" ? "tpl_" : "item_") + Date.now();
+        list.push({ id, name, category, unit, amount, purchased: false });
+      }
+    }
+
+    if (target === "template") {
+      saveTemplate();
+    } else {
+      saveShoppingList();
+    }
+    return true;
+  }
+
   function handleModalConfirm() {
-    const { modalContext, modalTarget, listItemEditId, shoppingList, templateList } = AppStore.getState();
+    const { modalContext, modalTarget, listItemEditId } = AppStore.getState();
     if (!modalContext) return;
-    
+
     const unit = document.querySelector("#modal-overlay .unit-btn.active").dataset.unit;
     const amount = parseFloat(els.amountInput.value) || 1;
 
-    if (modalTarget === "template") {
-      if (listItemEditId) {
-        const item = templateList.find(i => i.id === listItemEditId);
-        if (item) { item.amount = amount; item.unit = unit; }
-      } else {
-        templateList.push({ id: "tpl_" + Date.now(), name: modalContext.name, category: modalContext.category, unit, amount });
-      }
-      saveTemplate();
-      if (!listItemEditId) closeSheet();
-    } else {
-      if (listItemEditId) {
-        const item = shoppingList.find(i => i.id === listItemEditId);
-        if (item) { item.amount = amount; item.unit = unit; }
-      } else {
-        const existing = shoppingList.find(i => i.name === modalContext.name && !i.purchased);
-        if (existing) {
-          if (confirm(`"${modalContext.name}" כבר נמצא ברשימה. להוסיף לכמות הקיימת?`)) {
-            existing.amount = Math.round((existing.amount + amount) * 10) / 10;
-          } else {
-            closeModal();
-            return;
-          }
-        } else {
-          shoppingList.push({ id: "item_" + Date.now(), name: modalContext.name, category: modalContext.category, unit, amount, purchased: false });
-        }
-      }
-      saveShoppingList();
+    if (addItemToList(modalContext.name, amount, unit, modalContext.category, listItemEditId, modalTarget)) {
+      if (modalTarget === "template" && !listItemEditId) closeSheet();
+      closeModal();
     }
-    closeModal();
   }
-
   function openEditModal(id) {
     const product = AppStore.getState().catalog.find(p => p.id === id);
     if (!product) return;
