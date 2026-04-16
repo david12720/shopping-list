@@ -244,7 +244,7 @@ const AppUI = (() => {
               </select>
               <div class="qty-group">
                 <button class="qty-btn minus" title="הפחת">-</button>
-                <input type="number" class="qty-input" value="1" step="${isKg ? '0.1' : '1'}" min="${isKg ? '0.1' : '1'}">
+                <input type="number" class="qty-input" value="1" step="1" min="1">
                 <button class="qty-btn plus" title="הוסף">+</button>
               </div>
             </div>

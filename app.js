@@ -351,23 +351,19 @@ const AppController = (() => {
     const unitSelect = itemEl.querySelector(".catalog-unit-select");
 
     if (e.target.closest(".plus")) {
-      const step = parseFloat(qtyInput.step) || 1;
-      qtyInput.value = (parseFloat(qtyInput.value) + step).toFixed(step < 1 ? 1 : 0);
+      qtyInput.value = parseInt(qtyInput.value) + 1;
       return;
     }
     if (e.target.closest(".minus")) {
-      const step = parseFloat(qtyInput.step) || 1;
-      const val = parseFloat(qtyInput.value) - step;
-      if (val >= parseFloat(qtyInput.min)) {
-        qtyInput.value = val.toFixed(step < 1 ? 1 : 0);
-      }
+      const val = parseInt(qtyInput.value) - 1;
+      if (val >= 1) qtyInput.value = val;
       return;
     }
     if (e.target.closest(".catalog-unit-select")) {
-      const isKg = unitSelect.value === "kg";
-      qtyInput.step = isKg ? "0.1" : "1";
-      qtyInput.min = isKg ? "0.1" : "1";
-      if (!isKg) qtyInput.value = Math.max(1, Math.round(qtyInput.value));
+      // Always step 1 and min 1 now
+      qtyInput.step = "1";
+      qtyInput.min = "1";
+      qtyInput.value = Math.max(1, Math.round(qtyInput.value));
       return;
     }
 
