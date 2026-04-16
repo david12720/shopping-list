@@ -120,7 +120,7 @@ const AppController = (() => {
       }
     } catch (error) {
       console.error("AI Error:", error);
-      alert("משהו השתבש בעיבוד הבקשה. נסו שוב מאוחר יותר.");
+      alert("שגיאה בעיבוד הבקשה: " + error.message);
     } finally {
       AppUI.hideAiLoading();
     }

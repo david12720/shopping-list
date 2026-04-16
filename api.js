@@ -178,8 +178,11 @@ const AppAPI = (() => {
         const response = await aiFunction({ text, catalogNames });
         return response.data; // Should return { items: [{ name, amount, unit, category }] }
       } catch (error) {
-        console.error("AI Proxy Error:", error);
-        throw error;
+        console.error("AI Proxy Error details:", error);
+        // On some mobile browsers, error.message might be generic, 
+        // so we try to get more details if available.
+        const errorDetail = error.details || error.message || "Unknown error";
+        throw new Error(errorDetail);
       }
     },
 
