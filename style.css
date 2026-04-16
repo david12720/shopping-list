@@ -564,6 +564,10 @@ main {
 .catalog-item-name {
   font-size: 0.95rem;
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .catalog-item-actions {
@@ -571,6 +575,8 @@ main {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  width: 135px;
+  justify-content: flex-end;
 }
 
 .catalog-item-controls {
@@ -580,7 +586,33 @@ main {
   background: var(--bg);
   padding: 4px 8px;
   border-radius: 20px;
-  margin-right: 12px;
+  margin-right: 8px;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+/* Toast Notification */
+.toast {
+  position: fixed;
+  bottom: 85px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  z-index: 9999;
+  transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  direction: rtl;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 .qty-group {

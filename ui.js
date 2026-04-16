@@ -317,10 +317,27 @@ const AppUI = (() => {
     });
   }
 
+  function showToast(message) {
+    let toast = document.querySelector(".toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.className = "toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("show");
+    
+    if (toast.timeout) clearTimeout(toast.timeout);
+    toast.timeout = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 2000);
+  }
+
   return {
     els,
     refreshCategorySelects,
     setSyncStatus,
+    showToast,
     
     render(state) {
       // Views visibility

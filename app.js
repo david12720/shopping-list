@@ -298,14 +298,7 @@ const AppController = (() => {
       saveTemplate();
     } else if (e.target.classList.contains("item-add-to-list") && item) {
       if (addItemToList(item.name, item.amount, item.unit, item.category, null, "list")) {
-        const btn = e.target.closest(".item-add-to-list");
-        const originalText = btn.textContent;
-        btn.textContent = "✓";
-        btn.style.color = "#4CAF50";
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.color = "";
-        }, 1000);
+        AppUI.showToast(`"${item.name}" נוסף לרשימה`);
       }
     } else if (e.target.classList.contains("item-amount-edit") && item) {
       openAmountModal(item.name, item.unit, item.category, id, "template");
@@ -318,11 +311,7 @@ const AppController = (() => {
       const { name, unit, category } = chip.dataset;
       const target = AppStore.getState().addingToTarget;
       if (addItemToList(name, 1, unit, category, null, target)) {
-        const originalText = chip.textContent;
-        chip.textContent = "✓ " + originalText;
-        setTimeout(() => {
-          chip.textContent = originalText;
-        }, 1000);
+        AppUI.showToast(`"${name}" נוסף לרשימה`);
       }
     }
   }
@@ -373,15 +362,7 @@ const AppController = (() => {
       const target = AppStore.getState().addingToTarget;
       
       if (addItemToList(name, amount, unit, category, null, target)) {
-        const btn = e.target.closest(".catalog-item-add");
-        const originalText = btn.textContent;
-        btn.textContent = "התווסף!";
-        const originalBg = btn.style.background;
-        btn.style.background = "#4CAF50";
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.background = originalBg;
-        }, 1000);
+        AppUI.showToast(`"${name}" נוסף לרשימה`);
       }
       return;
     }
