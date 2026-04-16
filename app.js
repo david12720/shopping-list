@@ -330,8 +330,7 @@ const AppController = (() => {
   function handleCatalogClick(e) {
     const header = e.target.closest(".category-header");
     if (header) {
-      header.classList.toggle("open");
-      header.nextElementSibling.classList.toggle("open");
+      AppStore.toggleCategory(header.dataset.category);
       return;
     }
 

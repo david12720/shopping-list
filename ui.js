@@ -223,12 +223,13 @@ const AppUI = (() => {
       if (!items || items.length === 0) return;
       hasResults = true;
 
+      const isOpen = !state.collapsedCategories.has(cat);
       html += `
         <div class="category">
-          <div class="category-header" data-category="${cat}">
+          <div class="category-header ${isOpen ? 'open' : ''}" data-category="${cat}">
             <span>${cat}</span>
           </div>
-          <div class="category-items">
+          <div class="category-items ${isOpen ? 'open' : ''}">
       `;
 
       items.forEach(product => {
