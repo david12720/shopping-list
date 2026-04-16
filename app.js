@@ -94,17 +94,35 @@ const AppController = (() => {
 
     // Members list
     els.membersList.addEventListener("click", handleMemberAction);
+
+    // AI Modal
+    els.aiInput.addEventListener("input", () => {
+      els.aiSendBtn.disabled = !els.aiInput.value.trim();
+    });
+    els.aiInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey && !els.aiSendBtn.disabled) {
+        e.preventDefault();
+        handleAiSend();
+      }
+    });
+    els.aiSendBtn.addEventListener("click", handleAiSend);
+    els.aiCancelBtn.addEventListener("click", () => AppUI.hideAiLoading());
+    els.aiRecordBtn.addEventListener("click", toggleAiRecording);
   }
 
   // === Handlers ===
-  async function handleAiAdd() {
-    const text = prompt("מה תרצו להוסיף לרשימה? (לדוגמה: 2 קילו עגבניות, חלב ושוקו)");
-    if (!text || !text.trim()) return;
+  function handleAiAdd() {
+    AppUI.showAiPrompt();
+  }
+
+  async function handleAiSend() {
+    const text = els.aiInput.value.trim();
+    if (!text) return;
 
     AppUI.showAiLoading("מנתח את הבקשה שלך...");
 
     try {
-      const { catalog, shoppingList } = AppStore.getState();
+      const { catalog } = AppStore.getState();
       const response = await AppAPI.processNaturalLanguage(text, catalog);
 
       if (response && response.items) {
@@ -115,7 +133,7 @@ const AppController = (() => {
         }
 
         if (addedItems.length > 0) {
-          alert(`${addedItems.join(", ")} נוספו לרשימה`);
+          AppUI.showToast(`${addedItems.join(", ")} נוספו לרשימה`);
         }
       }
     } catch (error) {
@@ -123,6 +141,57 @@ const AppController = (() => {
       alert("שגיאה בעיבוד הבקשה: " + error.message);
     } finally {
       AppUI.hideAiLoading();
+    }
+  }
+
+  let recognition;
+  function initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = "he-IL";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        els.aiRecordBtn.classList.add("recording");
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join("");
+        
+        els.aiInput.value = transcript;
+        els.aiSendBtn.disabled = !els.aiInput.value.trim();
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        els.aiRecordBtn.classList.remove("recording");
+      };
+
+      recognition.onend = () => {
+        els.aiRecordBtn.classList.remove("recording");
+      };
+    }
+  }
+
+  function toggleAiRecording() {
+    if (!recognition) {
+      alert("חיפוש קולי לא נתמך בדפדפן זה");
+      return;
+    }
+
+    if (els.aiRecordBtn.classList.contains("recording")) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (e) {
+        console.warn("Recognition already started", e);
+      }
     }
   }
 
@@ -595,6 +664,7 @@ const AppController = (() => {
   // === Init ===
   function init() {
     setupEventListeners();
+    initSpeechRecognition();
     AppStore.subscribe(state => AppUI.render(state));
 
     AppAPI.onAuthStateChanged(user => {

@@ -73,6 +73,12 @@ const AppUI = (() => {
 
     // AI Modal
     aiModal: document.getElementById("ai-modal-overlay"),
+    aiPromptContainer: document.getElementById("ai-prompt-container"),
+    aiLoadingContainer: document.getElementById("ai-loading-container"),
+    aiInput: document.getElementById("ai-input"),
+    aiRecordBtn: document.getElementById("ai-record-btn"),
+    aiSendBtn: document.getElementById("ai-send-btn"),
+    aiCancelBtn: document.getElementById("ai-cancel-btn"),
     aiStatus: document.getElementById("ai-status"),
 
     // Bottom Sheet
@@ -377,13 +383,26 @@ const AppUI = (() => {
       if (viewName === "app") els.appContainer.classList.remove("hidden");
     },
 
+    showAiPrompt() {
+      els.aiInput.value = "";
+      els.aiSendBtn.disabled = true;
+      els.aiRecordBtn.classList.remove("recording");
+      els.aiPromptContainer.classList.remove("hidden");
+      els.aiLoadingContainer.classList.add("hidden");
+      els.aiModal.classList.remove("hidden");
+      setTimeout(() => els.aiInput.focus(), 100);
+    },
+
     showAiLoading(statusText) {
       els.aiStatus.textContent = statusText || "מפענח את הבקשה שלך...";
+      els.aiPromptContainer.classList.add("hidden");
+      els.aiLoadingContainer.classList.remove("hidden");
       els.aiModal.classList.remove("hidden");
     },
 
     hideAiLoading() {
       els.aiModal.classList.add("hidden");
-    }
+    },
+
   };
 })();

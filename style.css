@@ -959,7 +959,89 @@ main {
 
 .ai-modal {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 24px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.ai-help {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin: 10px 0 20px;
+}
+
+.ai-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+#ai-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 1rem;
+  resize: none;
+  background: var(--bg);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.ai-input-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.ai-record-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card);
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.ai-record-btn:hover {
+  border-color: #6366f1;
+  background: #f5f3ff;
+}
+
+.ai-record-btn.recording {
+  background: #ff4757;
+  color: white;
+  border-color: #ff4757;
+  animation: ai-pulse 1.5s infinite;
+  box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
+}
+
+@keyframes ai-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+}
+
+#ai-send-btn {
+  flex: 1;
+  height: 54px;
+  font-size: 1.1rem;
+  border-radius: 27px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+}
+
+#ai-send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .ai-loader {

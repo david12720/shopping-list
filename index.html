@@ -173,9 +173,26 @@
   <!-- AI Modal -->
   <div id="ai-modal-overlay" class="modal-overlay hidden">
     <div class="modal ai-modal">
-      <div class="ai-loader"></div>
-      <h3>הבינה המלאכותית חושבת...</h3>
-      <p id="ai-status">מפענח את הבקשה שלך...</p>
+      <!-- Prompt State -->
+      <div id="ai-prompt-container">
+        <h3>מה להוסיף לרשימה? ✨</h3>
+        <p class="ai-help">למשל: "3 קילו עגבניות, חלב ולחם"</p>
+        <div class="ai-input-wrapper">
+          <textarea id="ai-input" placeholder="הקלד או הקלט את הבקשה..." rows="3" dir="rtl"></textarea>
+          <div class="ai-input-actions">
+            <button id="ai-record-btn" class="ai-record-btn" aria-label="הקלט קול">🎤</button>
+            <button id="ai-send-btn" class="btn-primary">שלח</button>
+          </div>
+        </div>
+        <button id="ai-cancel-btn" class="btn-secondary" style="margin-top: 10px; width: 100%;">ביטול</button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="ai-loading-container" class="hidden">
+        <div class="ai-loader"></div>
+        <h3>הבינה המלאכותית חושבת...</h3>
+        <p id="ai-status">מפענח את הבקשה שלך...</p>
+      </div>
     </div>
   </div>
 
