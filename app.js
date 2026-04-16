@@ -533,7 +533,12 @@ const AppController = (() => {
   }
 
   function openSheet(target) {
-    AppStore.setState({ addingToTarget: target, isSheetOpen: true });
+    const allCategories = AppStore.getAllCategories();
+    AppStore.setState({ 
+      addingToTarget: target, 
+      isSheetOpen: true,
+      collapsedCategories: new Set(allCategories)
+    });
     els.sheetTitle.textContent = target === "template" ? "הוספה לתבנית" : "הוספת מוצרים";
     els.sheetSearchInput.value = "";
     els.sheetOverlay.classList.remove("hidden");
