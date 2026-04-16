@@ -57,6 +57,7 @@
       <nav class="tabs">
         <button class="tab active" data-tab="list">הרשימה שלי <span id="badge" class="badge hidden">0</span></button>
         <button class="tab" data-tab="template">תבנית שבועית</button>
+        <button class="tab" data-tab="catalog">ניהול מוצרים</button>
       </nav>
     </header>
 
@@ -85,6 +86,15 @@
           <button id="add-to-template-btn" class="btn-secondary">+ הוסף מוצר לתבנית</button>
           <button id="add-all-template" class="btn-primary hidden">הוסף הכל לרשימה</button>
         </div>
+      </section>
+
+      <!-- View 3: Catalog Management -->
+      <section id="catalog-view" class="view hidden">
+        <div class="catalog-management-header" style="margin-bottom: 15px; text-align: center;">
+          <button id="catalog-add-new-btn" class="btn-primary" style="width: 100%;">+ הוסף מוצר חדש לקטלוג</button>
+        </div>
+        <input type="search" id="catalog-management-search" placeholder="חיפוש מוצר בקטלוג..." class="sheet-search">
+        <div id="catalog-management-list"></div>
       </section>
     </main>
 
@@ -209,14 +219,6 @@
 
         <!-- Search -->
         <input type="search" id="sheet-search-input" placeholder="חיפוש מוצר..." class="sheet-search">
-
-        <!-- Custom item -->
-        <button id="sheet-add-custom-btn" class="btn-custom">+ הוסף מוצר מותאם אישית</button>
-        <div id="sheet-custom-form" class="custom-form hidden">
-          <input type="text" id="sheet-custom-name" placeholder="שם המוצר...">
-          <select id="sheet-custom-category"></select>
-          <button id="sheet-custom-submit" class="btn-primary">הוסף</button>
-        </div>
 
         <!-- Catalog -->
         <div id="sheet-catalog"></div>

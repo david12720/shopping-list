@@ -25,11 +25,6 @@ const AppController = (() => {
     els.leaveGroupBtn.addEventListener("click", handleLeaveGroup);
     els.copyInviteCode.addEventListener("click", handleCopyInviteCode);
 
-    // Tabs
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", () => switchTab(tab.dataset.tab));
-    });
-
     // FAB
     els.fabAdd.addEventListener("click", () => {
       const activeTab = document.querySelector(".tab.active");
@@ -49,6 +44,16 @@ const AppController = (() => {
     els.addToTemplateBtn.addEventListener("click", () => openSheet("template"));
     els.addAllTemplateBtn.addEventListener("click", handleAddAllTemplate);
 
+    // Tabs
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+    });
+
+    // Catalog Management
+    els.catalogManagementSearch.addEventListener("input", () => AppUI.render(AppStore.getState()));
+    els.catalogAddNewBtn.addEventListener("click", () => openEditModal(null));
+    els.catalogManagementList.addEventListener("click", handleCatalogClick);
+
     // Bottom Sheet
     els.sheetClose.addEventListener("click", closeSheet);
     els.sheetOverlay.addEventListener("click", (e) => { if (e.target === els.sheetOverlay) closeSheet(); });
@@ -59,12 +64,6 @@ const AppController = (() => {
     });
     els.sheetAddAllTemplate.addEventListener("click", handleAddAllTemplate);
     els.sheetSuggestedItems.addEventListener("click", handleSuggestedClick);
-    els.sheetAddCustomBtn.addEventListener("click", () => {
-      els.sheetCustomForm.classList.toggle("hidden");
-      if (!els.sheetCustomForm.classList.contains("hidden")) els.sheetCustomName.focus();
-    });
-    els.sheetCustomSubmit.addEventListener("click", handleSubmitCustomItem);
-    els.sheetCustomName.addEventListener("keydown", (e) => { if (e.key === "Enter") handleSubmitCustomItem(); });
     els.sheetCatalog.addEventListener("click", handleCatalogClick);
 
     // Modals
@@ -462,14 +461,24 @@ const AppController = (() => {
     }
   }
   function openEditModal(id) {
-    const product = AppStore.getState().catalog.find(p => p.id === id);
-    if (!product) return;
+    const isEdit = !!id;
+    const { catalog } = AppStore.getState();
+    const product = isEdit ? catalog.find(p => p.id === id) : { name: "", category: "שונות", defaultUnit: "units" };
+    
+    if (isEdit && !product) return;
+
     AppStore.setState({ editContext: { id } });
     els.editName.value = product.name;
     AppUI.refreshCategorySelects();
     els.editCategory.value = product.category;
     document.querySelectorAll(".edit-unit-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.unit === product.defaultUnit));
+    
+    const title = els.editModalOverlay.querySelector("h3");
+    if (title) title.textContent = isEdit ? "עריכת מוצר" : "מוצר חדש";
+    els.editSave.textContent = isEdit ? "שמור" : "צור";
+    
     els.editModalOverlay.classList.remove("hidden");
+    els.editName.focus();
   }
 
   function closeEditModal() {
@@ -479,27 +488,27 @@ const AppController = (() => {
 
   function handleSaveEditProduct() {
     const { editContext, catalog } = AppStore.getState();
-    if (!editContext) return;
-    const item = catalog.find(p => p.id === editContext.id);
-    item.name = els.editName.value.trim();
-    item.category = els.editCategory.value;
-    item.defaultUnit = document.querySelector(".edit-unit-btn.active").dataset.unit;
+    const isEdit = editContext && editContext.id;
+    
+    const name = els.editName.value.trim();
+    if (!name) return;
+    
+    const category = els.editCategory.value;
+    const defaultUnit = document.querySelector(".edit-unit-btn.active").dataset.unit;
+
+    if (isEdit) {
+      const item = catalog.find(p => p.id === editContext.id);
+      if (item) {
+        item.name = name;
+        item.category = category;
+        item.defaultUnit = defaultUnit;
+      }
+    } else {
+      catalog.push({ id: "p_" + Date.now(), name, category, defaultUnit });
+    }
+    
     saveCatalog();
     closeEditModal();
-  }
-
-  function handleSubmitCustomItem() {
-    const name = els.sheetCustomName.value.trim();
-    if (!name) return;
-    const { catalog } = AppStore.getState();
-    const category = els.sheetCustomCategory.value || "שונות";
-    if (!catalog.some(p => p.name === name)) {
-      catalog.push({ id: "p_" + Date.now(), name, category, defaultUnit: "units" });
-      saveCatalog();
-    }
-    els.sheetCustomName.value = "";
-    els.sheetCustomForm.classList.add("hidden");
-    openAmountModal(name, "units", category, null, AppStore.getState().addingToTarget);
   }
 
   function handleCategoryChange(select) {
@@ -528,8 +537,15 @@ const AppController = (() => {
 
   function switchTab(tab) {
     document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+    
     els.listView.classList.toggle("active", tab === "list");
+    els.listView.classList.toggle("hidden", tab !== "list");
+    
     els.templateView.classList.toggle("active", tab === "template");
+    els.templateView.classList.toggle("hidden", tab !== "template");
+    
+    els.catalogView.classList.toggle("active", tab === "catalog");
+    els.catalogView.classList.toggle("hidden", tab !== "catalog");
   }
 
   function openSheet(target) {

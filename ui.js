@@ -89,11 +89,12 @@ const AppUI = (() => {
     sheetSearchInput: document.getElementById("sheet-search-input"),
     sheetCatalog: document.getElementById("sheet-catalog"),
     sheetSuggestedItems: document.getElementById("sheet-suggested-items"),
-    sheetAddCustomBtn: document.getElementById("sheet-add-custom-btn"),
-    sheetCustomForm: document.getElementById("sheet-custom-form"),
-    sheetCustomName: document.getElementById("sheet-custom-name"),
-    sheetCustomCategory: document.getElementById("sheet-custom-category"),
-    sheetCustomSubmit: document.getElementById("sheet-custom-submit"),
+
+    // Catalog Management Tab
+    catalogView: document.getElementById("catalog-view"),
+    catalogManagementSearch: document.getElementById("catalog-management-search"),
+    catalogManagementList: document.getElementById("catalog-management-list"),
+    catalogAddNewBtn: document.getElementById("catalog-add-new-btn"),
   };
 
   function setSyncStatus(connected) {
@@ -201,8 +202,13 @@ const AppUI = (() => {
     `).join("");
   }
 
-  function renderCatalog(state) {
-    const filterText = (els.sheetSearchInput.value || "").trim();
+  function renderCatalog(state, isManagement = false) {
+    const filterInput = isManagement ? els.catalogManagementSearch : els.sheetSearchInput;
+    const container = isManagement ? (els.catalogManagementList || document.getElementById("catalog-management-list")) : els.sheetCatalog;
+    
+    if (!container) return;
+
+    const filterText = (filterInput.value || "").trim();
     const grouped = {};
     const constants = AppStore.getConstants();
     const allCategories = AppStore.getAllCategories();
@@ -237,6 +243,7 @@ const AppUI = (() => {
           <div class="catalog-item" data-id="${product.id}" data-name="${product.name}" data-category="${product.category}">
             <span class="catalog-item-name">${product.name}</span>
             
+            ${!isManagement ? `
             <div class="catalog-item-controls">
               <select class="catalog-unit-select">
                 <option value="units" selected>יח'</option>
@@ -248,11 +255,15 @@ const AppUI = (() => {
                 <button class="qty-btn plus" title="הוסף">+</button>
               </div>
             </div>
+            ` : ''}
 
             <div class="catalog-item-actions">
+              ${isManagement ? `
               <button class="catalog-item-edit" title="ערוך">✎</button>
               <button class="catalog-item-remove" title="מחק">✕</button>
+              ` : `
               <button class="catalog-item-add" title="הוסף לרשימה">הוסף</button>
+              `}
             </div>
           </div>
         `;
@@ -263,13 +274,15 @@ const AppUI = (() => {
 
     if (!hasResults) {
       if (filterText) {
-        html = `<div class="no-results">לא נמצאו מוצרים <button class="no-results-add" data-name="${filterText}">+ הוסף "${filterText}"</button></div>`;
+        html = `<div class="no-results">לא נמצאו מוצרים 
+          ${!isManagement ? `<button class="no-results-add" data-name="${filterText}">+ הוסף "${filterText}"</button>` : ''}
+        </div>`;
       } else {
-        html = `<div class="no-results">לא נמצאו מוצרים</div>`;
+        html = `<div class="no-results">הקטלוג ריק</div>`;
       }
     }
 
-    els.sheetCatalog.innerHTML = html;
+    container.innerHTML = html;
   }
 
   function renderSuggested(state) {
@@ -350,7 +363,8 @@ const AppUI = (() => {
       if (state.currentUser && state.currentGroupId) {
         renderShoppingList(state);
         renderTemplate(state);
-        renderCatalog(state);
+        renderCatalog(state); // Bottom sheet mode
+        renderCatalog(state, true); // Management tab mode
         renderSuggested(state);
         renderMembers(state);
         
