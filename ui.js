@@ -235,23 +235,26 @@ const AppUI = (() => {
       items.forEach(product => {
         html += `
           <div class="catalog-item" data-id="${product.id}" data-name="${product.name}" data-category="${product.category}">
-            <span class="catalog-item-name">${product.name}</span>
-            
-            <div class="catalog-item-controls">
-              <select class="catalog-unit-select">
-                <option value="units" selected>יח'</option>
-                <option value="kg">ק"ג</option>
-              </select>
-              <div class="qty-group">
-                <button class="qty-btn minus" title="הפחת">-</button>
-                <input type="number" class="qty-input" value="1" step="1" min="1">
-                <button class="qty-btn plus" title="הוסף">+</button>
+            <div class="catalog-item-top">
+              <span class="catalog-item-name">${product.name}</span>
+              <div class="catalog-item-meta">
+                <button class="catalog-item-edit" title="ערוך">✎</button>
+                <button class="catalog-item-remove" title="מחק">✕</button>
               </div>
             </div>
-
-            <div class="catalog-item-actions">
-              <button class="catalog-item-edit" title="ערוך">✎</button>
-              <button class="catalog-item-remove" title="מחק">✕</button>
+            
+            <div class="catalog-item-bottom">
+              <div class="catalog-item-controls">
+                <select class="catalog-unit-select">
+                  <option value="units" selected>יח'</option>
+                  <option value="kg">ק"ג</option>
+                </select>
+                <div class="qty-group">
+                  <button class="qty-btn minus" title="הפחת">-</button>
+                  <input type="number" class="qty-input" value="1" step="1" min="1">
+                  <button class="qty-btn plus" title="הוסף">+</button>
+                </div>
+              </div>
               <button class="catalog-item-add" title="הוסף לרשימה">הוסף</button>
             </div>
           </div>
