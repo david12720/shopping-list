@@ -173,8 +173,8 @@ const AppAPI = (() => {
       // Currently set up to call a Firebase Cloud Function.
       // If you switch to Vercel, you only change this URL or method.
       try {
-        // Assuming your Firebase Function will be at this location:
-        const aiFunction = firebase.functions('us-central1').httpsCallable('processShoppingRequest');
+        // Correct syntax for specifying region in Firebase Compat SDK
+        const aiFunction = firebase.app().functions('us-central1').httpsCallable('processShoppingRequest');
         const response = await aiFunction({ text, catalogNames });
         return response.data; // Should return { items: [{ name, amount, unit, category }] }
       } catch (error) {
