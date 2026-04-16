@@ -11,6 +11,8 @@ A real-time family shopping list web app with Hebrew RTL interface.
 - **Shared real-time list** — everyone in the group sees changes instantly
 - **65+ Israeli grocery products** organized in 8 categories
 - **Frequently bought** quick-pick chips for common items
+- **Inline quantity selection** — adjust amount and unit directly in the catalog
+- **Instant feedback** — toast notifications confirm item additions
 - **Editable catalog** — add, edit, or remove products from any device
 - **Custom items** — add your own products, saved to the shared catalog
 - **Mark as purchased** — check off items while shopping (strikethrough + moved to bottom)
