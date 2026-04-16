@@ -232,15 +232,14 @@ const AppUI = (() => {
       `;
 
       items.forEach(product => {
-        const isKg = product.defaultUnit === "kg";
         html += `
           <div class="catalog-item" data-id="${product.id}" data-name="${product.name}" data-category="${product.category}">
             <span class="catalog-item-name">${product.name}</span>
             
             <div class="catalog-item-controls">
               <select class="catalog-unit-select">
-                <option value="units" ${!isKg ? 'selected' : ''}>יח'</option>
-                <option value="kg" ${isKg ? 'selected' : ''}>ק"ג</option>
+                <option value="units" selected>יח'</option>
+                <option value="kg">ק"ג</option>
               </select>
               <div class="qty-group">
                 <button class="qty-btn minus" title="הפחת">-</button>
