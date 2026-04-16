@@ -252,7 +252,7 @@ const AppUI = (() => {
             <div class="catalog-item-actions">
               <button class="catalog-item-edit" title="ערוך">✎</button>
               <button class="catalog-item-remove" title="מחק">✕</button>
-              <button class="catalog-item-add" title="הוסף לרשימה">+</button>
+              <button class="catalog-item-add" title="הוסף לרשימה">הוסף</button>
             </div>
           </div>
         `;

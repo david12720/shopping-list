@@ -649,6 +649,28 @@ main {
   margin-right: 4px;
 }
 
+.catalog-item-add {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  line-height: 1;
+  min-width: 60px;
+}
+
+.catalog-item-add:hover {
+  background: var(--primary-dark);
+}
+
 .catalog-item-edit,
 .catalog-item-remove {
   background: none;

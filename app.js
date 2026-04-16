@@ -375,7 +375,7 @@ const AppController = (() => {
       if (addItemToList(name, amount, unit, category, null, target)) {
         const btn = e.target.closest(".catalog-item-add");
         const originalText = btn.textContent;
-        btn.textContent = "✓";
+        btn.textContent = "התווסף!";
         const originalBg = btn.style.background;
         btn.style.background = "#4CAF50";
         setTimeout(() => {
