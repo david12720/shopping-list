@@ -112,6 +112,8 @@ const AppController = (() => {
         els.aiRecordBtn.classList.remove("recording");
       }
       AppUI.hideAiLoading();
+      AppUI.hideAiPrompt();
+    });
     // AI Actions
     const setAiHint = (t) => els.aiActionHint.textContent = t || "\u00A0";
     els.aiRecipeBtn.addEventListener("mouseenter", () => setAiHint("🧑‍🍳 מצב שף: הצעת מצרכים למנה/מתכון"));
