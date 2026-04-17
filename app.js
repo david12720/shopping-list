@@ -112,7 +112,6 @@ const AppController = (() => {
         els.aiRecordBtn.classList.remove("recording");
       }
       AppUI.hideAiLoading();
-      AppUI.hideAiPrompt();
     });
     // AI Actions
     const setAiHint = (t) => els.aiActionHint.textContent = t || "\u00A0";
