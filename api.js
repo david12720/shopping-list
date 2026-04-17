@@ -147,6 +147,9 @@ const AppAPI = (() => {
       refs.template = db.ref(`groups/${groupId}/templateList`);
       refs.template.on("value", snapshot => callbacks.onTemplateUpdate(snapshot.val() || []));
 
+      refs.stats = db.ref(`groups/${groupId}/productStats`);
+      refs.stats.on("value", snapshot => callbacks.onStatsUpdate(snapshot.val() || {}));
+
       refs.categories = db.ref(`groups/${groupId}/customCategories`);
       refs.categories.on("value", snapshot => callbacks.onCategoriesUpdate(snapshot.val()));
 
@@ -213,6 +216,21 @@ const AppAPI = (() => {
 
     saveCustomCategories(groupId, data) {
       return db.ref(`groups/${groupId}/customCategories`).set(data);
+    },
+
+    async incrementProductStats(groupId, itemNames) {
+      if (!itemNames || itemNames.length === 0) return;
+      
+      const updates = {};
+      for (const name of itemNames) {
+        // We use a transaction or a simple increment if possible. 
+        // Since we are doing batch, we can use a loop or multiple updates.
+        // Firebase RTDB doesn't have a built-in "increment all" for multiple paths in one call easily without knowing current values,
+        // but we can use server-side increment for each.
+        const path = `groups/${groupId}/productStats/${name}/purchaseCount`;
+        updates[path] = firebase.database.ServerValue.increment(1);
+      }
+      return db.ref().update(updates);
     },
 
     // Migration

@@ -775,8 +775,18 @@ const AppController = (() => {
     }, { once: true });
   }
 
-  function handleClearPurchased() {
-    const newList = AppStore.getState().shoppingList.filter(i => !i.purchased);
+  async function handleClearPurchased() {
+    const state = AppStore.getState();
+    const purchasedItems = state.shoppingList.filter(i => i.purchased);
+    if (purchasedItems.length === 0) return;
+
+    // Extract unique names for stats tracking
+    const itemNames = [...new Set(purchasedItems.map(i => i.name))];
+    
+    // Increment purchase stats in background
+    AppAPI.incrementProductStats(state.currentGroupId, itemNames).catch(console.error);
+
+    const newList = state.shoppingList.filter(i => !i.purchased);
     AppStore.setState({ shoppingList: newList });
     saveShoppingList();
   }
@@ -829,7 +839,9 @@ const AppController = (() => {
               onListUpdate: shoppingList => AppStore.setState({ shoppingList }),
               onCatalogUpdate: catalog => AppStore.setState({ catalog }),
               onTemplateUpdate: templateList => AppStore.setState({ templateList }),
+              onStatsUpdate: productStats => AppStore.setState({ productStats }),
               onCategoriesUpdate: customCategories => {
+
                 const normalized = Array.isArray(customCategories) ? customCategories : (customCategories ? Object.values(customCategories) : []);
                 AppStore.setState({ customCategories: normalized });
                 AppUI.refreshCategorySelects();

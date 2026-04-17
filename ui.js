@@ -292,8 +292,21 @@ const AppUI = (() => {
 
   function renderSuggested(state) {
     const constants = AppStore.getConstants();
+    const stats = state.productStats || {};
+    
+    // Sort items by purchaseCount from stats
+    const sortedStats = Object.entries(stats)
+      .sort((a, b) => (b[1].purchaseCount || 0) - (a[1].purchaseCount || 0))
+      .map(entry => entry[0]);
+
+    // Combine stats with default suggested names (uniques)
+    const combinedNames = [...new Set([...sortedStats, ...constants.SUGGESTED_NAMES])];
+    
+    // Take top 12
+    const displayNames = combinedNames.slice(0, 12);
+
     let html = "";
-    constants.SUGGESTED_NAMES.forEach(name => {
+    displayNames.forEach(name => {
       const product = state.catalog.find(p => p.name === name);
       if (!product) return;
       html += `<button class="suggested-chip" data-name="${product.name}" data-category="${product.category}" data-unit="${product.defaultUnit}">${product.name}</button>`;

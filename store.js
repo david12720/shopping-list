@@ -10,6 +10,7 @@ const AppStore = (() => {
     shoppingList: [],
     catalog: [],
     templateList: [],
+    productStats: {},
     customCategories: [],
     collapsedCategories: new Set(),
     isSheetOpen: false,
