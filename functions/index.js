@@ -32,8 +32,12 @@ exports.processShoppingRequest = onCall({
 
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+    
+    // Switch model based on input: 2.5 Pro for images, 2.5 Flash Lite for text
+    const modelName = fileData ? "gemini-2.5-pro" : "gemini-2.5-flash-lite";
+    
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash-lite",
+      model: modelName,
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -79,12 +83,18 @@ exports.processShoppingRequest = onCall({
     // Log cost asynchronously
     const usage = result.response.usageMetadata;
     if (usage) {
-      const inputCost = (usage.promptTokenCount / 1_000_000) * 0.10;
-      const outputCost = (usage.candidatesTokenCount / 1_000_000) * 0.40;
+      // Different rates for different models (Gemini 2.5 Pro vs Flash Lite)
+      const isPro = modelName.includes("2.5-pro");
+      const inRate = isPro ? 1.25 : 0.10; // $1.25/1M vs $0.1/1M
+      const outRate = isPro ? 10.00 : 0.40; // $10.00/1M vs $0.4/1M
+
+      const inputCost = (usage.promptTokenCount / 1_000_000) * inRate;
+      const outputCost = (usage.candidatesTokenCount / 1_000_000) * outRate;
       
       admin.database().ref("/admin/ai_costs").push({
         timestamp: admin.database.ServerValue.TIMESTAMP,
         uid: request.auth.uid,
+        model: modelName,
         inputTokens: usage.promptTokenCount,
         outputTokens: usage.candidatesTokenCount,
         cost: inputCost + outputCost,
