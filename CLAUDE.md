@@ -18,8 +18,8 @@ A Hebrew shopping list application with real-time synchronization via Firebase, 
 - ✅ Mark items as purchased (strikethrough)
 - ✅ Delete individual items or clear entire list
 - ✅ Manage product catalog (add, edit, remove products)
-- ✅ Search catalog by product name
-- ✅ Add custom products with category selection
+- ✅ AI Vision, Voice & Text input — parse recipes or lists into items
+- ✅ AI Review Screen — verify extracted items and assign categories
 - ✅ Frequently-bought suggestions
 - ✅ Real-time sync across multiple clients
 - ✅ Responsive design (mobile-first)
@@ -69,14 +69,15 @@ To allow Google Sign-in on a live domain (like GitHub Pages):
 ### Components
 
 **index.html**
-- Defines semantic structure with tabs (Shopping List / Add Products)
-- Two primary modals: Amount selection (add/edit items) and Edit Product
-- Custom form for adding items to catalog
+- Defines semantic structure with tabs (Shopping List / Weekly Template)
+- AI Modal with Image upload, Voice (Web Speech API), and Text inputs
+- AI Review list container for verifying and categorizing items
 
 **app.js**
 - Firebase listeners for real-time data sync
 - Event delegation for list and catalog interactions
-- Modal state management (add vs. edit modes)
+- `AiProcessor` orchestrator for multimodal AI workflows
+- `GeminiProvider` for communicating with Firebase Cloud Functions
 - Data persistence via `saveShoppingList()` and `saveCatalog()`
 
 **utils.js**
@@ -134,6 +135,13 @@ To allow Google Sign-in on a live domain (like GitHub Pages):
 
 /invites/{inviteCode}: "{groupId}"
 ```
+
+### AI Integration
+
+The app uses a **Strategy Pattern** for AI:
+- `AiProcessor`: Orchestrates the flow (Capture -> Process -> Review -> Save)
+- `AiProvider`: Interface for different AI backends (e.g., `GeminiProvider`)
+- Backend: Firebase Cloud Functions v2 using `gemini-2.5-pro` (images) and `gemini-2.5-flash-lite` (text)
 
 ## Development Notes
 
