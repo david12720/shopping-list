@@ -1635,3 +1635,105 @@ main {
 .vertical {
   flex-direction: column;
 }
+
+/* Admin Dashboard */
+.admin-modal {
+  width: 95%;
+  max-width: 800px;
+}
+
+.admin-content {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.admin-stats-summary {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.admin-users-list-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th, .admin-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  background: #f1f3f5;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.admin-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-user-email {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.limit-input {
+  width: 60px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.admin-action-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border: none;
+}
+
+.admin-btn-delete {
+  background: #fff5f5;
+  color: #fa5252;
+  border: 1px solid #ffa8a8;
+}
+
+.admin-btn-delete:hover {
+  background: #fa5252;
+  color: white;
+}
+
+.admin-section hr {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 15px 0;
+}
+

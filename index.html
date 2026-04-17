@@ -115,11 +115,45 @@
             <label>חברי קבוצה:</label>
             <ul id="members-list"></ul>
           </div>
+          <div id="admin-section" class="admin-section hidden">
+            <hr>
+            <button id="admin-dashboard-btn" class="btn-primary" style="width: 100%; margin-top: 10px;">ניהול מערכת (Admin)</button>
+          </div>
         </div>
         <div class="modal-actions vertical">
           <button id="leave-group-btn" class="btn-danger">עזוב קבוצה</button>
           <button id="logout-btn" class="btn-secondary">התנתק</button>
           <button id="close-settings" class="btn-text">סגור</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Admin Dashboard -->
+    <div id="admin-modal-overlay" class="modal-overlay hidden">
+      <div class="modal admin-modal">
+        <h3>ניהול משתמשים ועלויות AI</h3>
+        <div class="admin-content">
+          <div class="admin-stats-summary">
+            <span>עלות כוללת (החודש): <strong id="admin-total-month-cost">$0.00</strong></span>
+          </div>
+          <div class="admin-users-list-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>משתמש</th>
+                  <th>עלות (חודש)</th>
+                  <th>מגבלה ($)</th>
+                  <th>פעולות</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-list">
+                <!-- Users will be injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="close-admin" class="btn-secondary">סגור</button>
         </div>
       </div>
     </div>

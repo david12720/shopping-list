@@ -131,8 +131,40 @@ const AppAPI = (() => {
       return db.ref().update(updates);
     },
 
-    // Real-time Data Sync
-    setupGroupListeners(groupId, callbacks) {
+    // Admin Methods
+    async fetchAllUsers() {
+      const snapshot = await db.ref("/users").once("value");
+      return snapshot.val() || {};
+    },
+
+    async fetchAllAiCosts() {
+      const snapshot = await db.ref("/admin/ai_costs").once("value");
+      return snapshot.val() || {};
+    },
+
+    async fetchLimits() {
+      const snapshot = await db.ref("/admin/limits").once("value");
+      return snapshot.val() || {};
+    },
+
+    async updateLimit(uid, maxCost) {
+      return db.ref(`/admin/limits/${uid}`).update({ maxCostPerMonth: parseFloat(maxCost) || 0 });
+    },
+
+    async removeUserFromSystem(uid) {
+      const userSnap = await db.ref(`/users/${uid}`).once("value");
+      const user = userSnap.val();
+      if (!user) return;
+
+      const updates = {};
+      if (user.groupId) {
+        updates[`/groups/${user.groupId}/members/${uid}`] = null;
+      }
+      updates[`/users/${uid}`] = null;
+      return db.ref().update(updates);
+    },
+
+    // Real-time Data Sync    setupGroupListeners(groupId, callbacks) {
       this.detachListeners();
 
       refs.group = db.ref(`groups/${groupId}`);

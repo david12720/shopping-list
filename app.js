@@ -106,9 +106,15 @@ const AppController = (() => {
       }
     });
     els.aiSendBtn.addEventListener("click", handleAiSend);
-    
-    const stopAiVoice = () => {
-      if (recognition) {
+
+    // Admin
+    els.adminDashboardBtn.addEventListener("click", handleOpenAdmin);
+    els.closeAdmin.addEventListener("click", () => els.adminModalOverlay.classList.add("hidden"));
+    els.adminModalOverlay.addEventListener("click", (e) => { if (e.target === els.adminModalOverlay) els.adminModalOverlay.classList.add("hidden"); });
+    els.adminUsersList.addEventListener("change", handleAdminLimitChange);
+    els.adminUsersList.addEventListener("click", handleAdminDeleteUser);
+
+    const stopAiVoice = () => {      if (recognition) {
         try {
           recognition.abort();
         } catch(e) {}
@@ -738,6 +744,53 @@ const AppController = (() => {
     const { currentGroupId, group } = AppStore.getState();
     const member = group.members[uid];
     if (confirm(`להסיר את ${member.name}?`)) AppAPI.removeMember(currentGroupId, uid);
+  }
+
+  // === Admin Logic ===
+  async function handleOpenAdmin() {
+    AppUI.els.adminModalOverlay.classList.remove("hidden");
+    try {
+      const users = await AppAPI.fetchAllUsers();
+      const costs = await AppAPI.fetchAllAiCosts();
+      const limits = await AppAPI.fetchLimits();
+      AppUI.renderAdminDashboard(users, costs, limits);
+    } catch (err) {
+      console.error("Failed to fetch admin data:", err);
+      AppUI.showToast("שגיאה בטעינת נתוני מנהל");
+    }
+  }
+
+  async function handleAdminLimitChange(e) {
+    const input = e.target.closest(".admin-limit-change");
+    if (!input) return;
+    const uid = input.closest("tr").dataset.uid;
+    const limit = input.value;
+    try {
+      await AppAPI.updateLimit(uid, limit);
+      AppUI.showToast("המגבלה עודכנה");
+    } catch (err) {
+      console.error("Failed to update limit:", err);
+      AppUI.showToast("שגיאה בעדכון המגבלה");
+    }
+  }
+
+  async function handleAdminDeleteUser(e) {
+    const btn = e.target.closest(".admin-btn-delete");
+    if (!btn) return;
+    const row = btn.closest("tr");
+    const uid = row.dataset.uid;
+    const userName = row.querySelector(".admin-user-name").textContent;
+
+    if (confirm(`מחיקת המשתמש "${userName}" לצמיתות? פעולה זו תסיר אותו גם מכל קבוצה.`)) {
+      try {
+        await AppAPI.removeUserFromSystem(uid);
+        AppUI.showToast("המשתמש הוסר בהצלחה");
+        handleOpenAdmin(); // Refresh
+      } catch (err) {
+        console.error("Failed to remove user:", err);
+        AppUI.showToast("שגיאה בהסרת המשתמש");
+      }
+    }
   }
 
   // === Modal Logic ===

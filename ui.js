@@ -50,6 +50,14 @@ const AppUI = (() => {
     membersList: document.getElementById("members-list"),
     leaveGroupBtn: document.getElementById("leave-group-btn"),
     closeSettings: document.getElementById("close-settings"),
+    
+    // Admin Elements
+    adminSection: document.getElementById("admin-section"),
+    adminDashboardBtn: document.getElementById("admin-dashboard-btn"),
+    adminModalOverlay: document.getElementById("admin-modal-overlay"),
+    adminUsersList: document.getElementById("admin-users-list"),
+    adminTotalMonthCost: document.getElementById("admin-total-month-cost"),
+    closeAdmin: document.getElementById("close-admin"),
 
     // Amount Modal
     modalOverlay: document.getElementById("modal-overlay"),
@@ -376,7 +384,7 @@ const AppUI = (() => {
       // Views visibility
       if (!state.currentUser) {
         els.loadingView.classList.toggle("hidden", !!state.currentUser); // Wait, if no user and not initializing?
-        // Logic for which view to show belongs in app.js controller, 
+        // Logic for which view to show belongs in app.js controller,
         // but UI provides the methods.
       }
 
@@ -386,15 +394,65 @@ const AppUI = (() => {
         renderCatalog(state);
         renderSuggested(state);
         renderMembers(state);
-        
+
         els.userAvatar.src = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
         els.userName.textContent = state.currentUser.displayName;
         els.groupNameInput.value = state.group ? state.group.name : "";
         els.displayInviteCode.textContent = state.group ? state.group.inviteCode : "------";
         els.refreshInviteCode.classList.toggle("hidden", state.group?.ownerId !== state.currentUser.uid);
+
+        // Admin section
+        els.adminSection.classList.toggle("hidden", !state.currentUser.isAdmin);
       }
     },
 
+    renderAdminDashboard(users, costs, limits) {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      let totalMonthCost = 0;
+      let html = "";
+
+      const userEntries = Object.entries(users);
+
+      userEntries.forEach(([uid, user]) => {
+        // Calculate user costs for current month
+        const userCosts = Object.values(costs).filter(c => c.uid === uid);
+        const monthCosts = userCosts.filter(c => {
+          const d = new Date(c.timestamp);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === currentMonth;
+        });
+
+        const userMonthCost = monthCosts.reduce((sum, c) => sum + (c.cost || 0), 0);
+        totalMonthCost += userMonthCost;
+
+        const limit = limits[uid]?.maxCostPerMonth || 0;
+        const isOverLimit = limit > 0 && userMonthCost >= limit;
+
+        html += `
+          <tr data-uid="${uid}">
+            <td>
+              <div class="admin-user-info">
+                <img src="${user.photoURL || 'https://www.gravatar.com/avatar/0000?d=mp'}" class="admin-user-avatar">
+                <div class="admin-user-details">
+                  <span class="admin-user-name">${user.name || 'Unknown'}</span>
+                  <span class="admin-user-email">${user.email || ''}</span>
+                </div>
+              </div>
+            </td>
+            <td class="${isOverLimit ? 'text-danger' : ''}">$${userMonthCost.toFixed(3)}</td>
+            <td>
+              <input type="number" class="limit-input admin-limit-change" value="${limit}" step="0.1" min="0">
+            </td>
+            <td>
+              <button class="admin-action-btn admin-btn-delete" title="מחק משתמש לצמיתות">מחק</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      els.adminUsersList.innerHTML = html || '<tr><td colspan="4" style="text-align:center">אין משתמשים במערכת</td></tr>';
+      els.adminTotalMonthCost.textContent = `$${totalMonthCost.toFixed(2)}`;
+    },
     showView(viewName) {
       els.loadingView.classList.add("hidden");
       els.loginView.classList.add("hidden");

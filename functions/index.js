@@ -22,6 +22,34 @@ exports.processShoppingRequest = onCall({
     throw new HttpsError("unauthenticated", "Please sign in first.");
   }
 
+  const uid = request.auth.uid;
+
+  // Check if user is over their monthly limit
+  const limitSnap = await admin.database().ref(`/admin/limits/${uid}`).once("value");
+  const limitData = limitSnap.val();
+  
+  if (limitData && limitData.maxCostPerMonth > 0) {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Sum costs for this month
+    const costsSnap = await admin.database().ref("/admin/ai_costs")
+      .orderByChild("uid").equalTo(uid).once("value");
+    
+    const costs = costsSnap.val() || {};
+    let monthCost = 0;
+    Object.values(costs).forEach(c => {
+      const d = new Date(c.timestamp);
+      if (`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === currentMonth) {
+        monthCost += (c.cost || 0);
+      }
+    });
+
+    if (monthCost >= limitData.maxCostPerMonth) {
+      throw new HttpsError("resource-exhausted", "הגעת למגבלת השימוש החודשית שלך ב-AI.");
+    }
+  }
+
   const { text, fileData, context, mode } = request.data;
   const catalogNames = (context && context.catalogNames) || [];
   const categories = (context && context.categories) || [];
