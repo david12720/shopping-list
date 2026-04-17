@@ -10,7 +10,7 @@ A real-time family shopping list web app with Hebrew RTL interface.
 - **Shared Groups** — create a group and invite family members via code
 - **Shared real-time list** — everyone in the group sees changes instantly
 - **65+ Israeli grocery products** organized in 8 categories
-- **Frequently bought** quick-pick chips for common items
+- **Dynamic "Most Purchased"** — automatically tracks and sorts frequently bought items based on group history
 - **AI Vision, Voice & Text** — upload a recipe photo, speak, or type (e.g., "3kg tomatoes and milk"). AI parses items into a review list where you can verify amounts and assign categories before adding.
 - **Inline quantity selection** — adjust amount and unit directly in the catalog
 - **Instant feedback** — toast notifications confirm item additions
