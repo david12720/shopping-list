@@ -443,6 +443,7 @@ const AppUI = (() => {
       const row = document.createElement("div");
       row.className = "review-row";
       if (item.isExisting) row.classList.add("existing-item");
+      if (item.isInList) row.classList.add("in-list-item");
       row.dataset.index = index;
 
       // Checkbox
@@ -451,12 +452,29 @@ const AppUI = (() => {
       checkbox.checked = true;
       checkbox.className = "review-check";
 
-      // Name
+      // Name column (to hold name + notice)
+      const nameCol = document.createElement("div");
+      nameCol.style.flex = "2";
+      nameCol.style.display = "flex";
+      nameCol.style.flexDirection = "column";
+
       const name = document.createElement("input");
       name.type = "text";
       name.value = item.name;
       name.className = "review-name";
+      name.style.width = "100%";
       if (item.isExisting) name.disabled = true;
+
+      nameCol.appendChild(name);
+
+      if (item.isInList) {
+        const notice = document.createElement("span");
+        notice.textContent = "כבר ברשימה (יתווסף לכמות)";
+        notice.style.fontSize = "10px";
+        notice.style.color = "#f59e0b";
+        notice.style.marginTop = "2px";
+        nameCol.appendChild(notice);
+      }
 
       // Amount
       const amount = document.createElement("input");
@@ -489,7 +507,7 @@ const AppUI = (() => {
         cat.appendChild(opt);
       });
 
-      row.append(checkbox, name, amount, unit, cat);
+      row.append(checkbox, nameCol, amount, unit, cat);
       return row;
     },
 

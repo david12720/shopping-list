@@ -183,24 +183,6 @@ const AppAPI = (() => {
     },
 
     // Data Persistence
-    async saveCatalogItem(item) {
-      const uid = firebase.auth().currentUser.uid;
-      const userSnap = await db.ref(`users/${uid}`).once("value");
-      const groupId = userSnap.val().groupId;
-      return db.ref(`groups/${groupId}/catalog/${item.id}`).set(item);
-    },
-
-    async addListItem(item) {
-      const uid = firebase.auth().currentUser.uid;
-      const userSnap = await db.ref(`users/${uid}`).once("value");
-      const groupId = userSnap.val().groupId;
-      // Get current list
-      const listSnap = await db.ref(`groups/${groupId}/shoppingList`).once("value");
-      const list = listSnap.val() || [];
-      list.push(item);
-      return db.ref(`groups/${groupId}/shoppingList`).set(list);
-    },
-
     saveShoppingList(groupId, data) {
 
       return db.ref(`groups/${groupId}/shoppingList`).set(data);

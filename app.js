@@ -106,12 +106,26 @@ const AppController = (() => {
       }
     });
     els.aiSendBtn.addEventListener("click", handleAiSend);
-    els.aiCancelBtn.addEventListener("click", () => {
+    
+    const stopAiVoice = () => {
       if (recognition) {
-        recognition.stop();
+        try {
+          recognition.abort();
+        } catch(e) {}
         els.aiRecordBtn.classList.remove("recording");
       }
+    };
+
+    els.aiCancelBtn.addEventListener("click", () => {
+      stopAiVoice();
       AppUI.hideAiLoading();
+    });
+
+    els.aiModal.addEventListener("click", (e) => {
+      if (e.target === els.aiModal) {
+        stopAiVoice();
+        AppUI.hideAiLoading();
+      }
     });
     // AI Actions
     const setAiHint = (t) => els.aiActionHint.textContent = t || "\u00A0";
@@ -212,9 +226,14 @@ const AppController = (() => {
     },
 
     async process(text) {
-      const { catalog } = AppStore.getState();
+      let { catalog, shoppingList } = AppStore.getState();
       const categories = AppStore.getAllCategories();
       
+      // Normalize shoppingList to array
+      if (!Array.isArray(shoppingList)) {
+        shoppingList = shoppingList ? Object.values(shoppingList) : [];
+      }
+
       let loadingMsg = "מנתח את הטקסט...";
       if (this.attachedFile) loadingMsg = "קורא את התמונה...";
       if (this.recipeMode) loadingMsg = "מכין לך רשימה למנה...";
@@ -227,12 +246,18 @@ const AppController = (() => {
         if (response && response.items) {
           // Flag existing items and sync their categories
           this.extractedItems = response.items.map(item => {
+            const trimmedName = item.name.toLowerCase().trim();
             const catalogItem = Object.values(catalog).find(
-              c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+              c => c.name.toLowerCase().trim() === trimmedName
             );
+            const inList = shoppingList.find(
+              li => !li.purchased && li.name.toLowerCase().trim() === trimmedName
+            );
+
             return {
               ...item,
               isExisting: !!catalogItem,
+              isInList: !!inList,
               // Use existing category if found, otherwise keep AI guess
               category: catalogItem ? catalogItem.category : item.category
             };
@@ -251,14 +276,18 @@ const AppController = (() => {
     async confirmReview() {
       const rows = els.aiReviewList.querySelectorAll(".review-row");
       const selectedItems = [];
-      const { catalog } = AppStore.getState();
+      let { catalog, shoppingList, currentGroupId } = AppStore.getState();
       const categories = AppStore.getAllCategories();
+
+      // Normalize lists
+      if (!Array.isArray(shoppingList)) shoppingList = shoppingList ? Object.values(shoppingList) : [];
+      if (!Array.isArray(catalog)) catalog = catalog ? Object.values(catalog) : [];
 
       rows.forEach(row => {
         const checkbox = row.querySelector(".review-check");
         if (checkbox.checked) {
           selectedItems.push({
-            name: row.querySelector(".review-name").value,
+            name: row.querySelector(".review-name").value.trim(),
             amount: parseFloat(row.querySelector(".review-amount").value),
             unit: row.querySelector(".review-unit").value,
             category: row.querySelector(".review-category").value
@@ -269,40 +298,57 @@ const AppController = (() => {
       if (selectedItems.length === 0) return;
 
       AppUI.showAiLoading("מעדכן את הרשימה...");
-      
+
       try {
         const addedNames = [];
-        for (const item of selectedItems) {
-          // Find or Create in catalog
-          let catalogItem = Object.values(catalog).find(
-            c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim()
-          );
+        let catalogChanged = false;
 
+        for (const item of selectedItems) {
+          const searchName = item.name.toLowerCase().trim();
+          
+          // 1. Catalog Check (Consistent with improved matching)
+          let catalogItem = catalog.find(p => p.name.toLowerCase().trim() === searchName);
           if (!catalogItem) {
-            const newId = "p_" + Date.now() + Math.random().toString(36).substr(2, 5);
             catalogItem = {
-              id: newId,
+              id: "p_" + Date.now() + Math.random().toString(36).substr(2, 5),
               name: item.name,
               category: item.category,
               defaultUnit: item.unit
             };
-            await AppAPI.saveCatalogItem(catalogItem);
+            catalog.push(catalogItem);
+            catalogChanged = true;
           }
 
-          // Add to list
-          const newItem = {
-            id: "item_" + Date.now() + Math.random().toString(36).substr(2, 5),
-            name: item.name,
-            category: catalogItem.category,
-            unit: item.unit,
-            amount: item.amount,
-            purchased: false
-          };
-          await AppAPI.addListItem(newItem);
+          // 2. Shopping List Check (Consistent with improved addItemToList)
+          const existing = shoppingList.find(i => i.name.toLowerCase().trim() === searchName && !i.purchased);
+
+          if (existing) {
+            // MERGE: Update amount (Round to 1 decimal)
+            existing.amount = Math.round((existing.amount + item.amount) * 10) / 10;
+          } else {
+            // Add new
+            shoppingList.push({
+              id: "item_" + Date.now() + Math.random().toString(36).substr(2, 5),
+              name: item.name,
+              category: catalogItem.category,
+              unit: item.unit,
+              amount: item.amount,
+              purchased: false
+            });
+          }
           addedNames.push(item.name);
         }
 
-        AppUI.showToast(`${addedNames.length} מוצרים נוספו לרשימה`);
+        // Save everything at once
+        if (catalogChanged) {
+          AppStore.setState({ catalog });
+          await AppAPI.saveCatalog(currentGroupId, catalog);
+        }
+
+        AppStore.setState({ shoppingList });
+        await AppAPI.saveShoppingList(currentGroupId, shoppingList);
+
+        AppUI.showToast(`${addedNames.length} מוצרים עודכנו/נוספו`);
         AppUI.hideAiLoading();
         this.removeFile();
       } catch (error) {
@@ -310,8 +356,7 @@ const AppController = (() => {
         alert("שגיאה בשמירת המוצרים");
         AppUI.hideAiLoading();
       }
-    }
-  };
+    }  };
 
   // === AI Provider Implementation (SOLID Strategy) ===
   const GeminiProvider = {
@@ -380,17 +425,28 @@ const AppController = (() => {
       };
 
       recognition.onresult = (event) => {
+        let isFinal = false;
         const transcript = Array.from(event.results)
-          .map(result => result[0])
+          .map(result => {
+            if (result.isFinal) isFinal = true;
+            return result[0];
+          })
           .map(result => result.transcript)
           .join("");
         
         els.aiInput.value = transcript;
         els.aiSendBtn.disabled = !els.aiInput.value.trim();
+        
+        // Force stop if we got a final result to release microphone faster
+        if (isFinal && recognition) {
+          recognition.stop();
+        }
       };
 
       recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
+        if (event.error !== "no-speech") {
+          console.error("Speech recognition error:", event.error);
+        }
         els.aiRecordBtn.classList.remove("recording");
       };
 
@@ -717,9 +773,10 @@ const AppController = (() => {
       }
     } else {
       // Check for existing items with the same name (not purchased for list, any for template)
+      const searchName = name.toLowerCase().trim();
       const existing = (target === "template") 
-        ? list.find(i => i.name === name)
-        : list.find(i => i.name === name && !i.purchased);
+        ? list.find(i => i.name.toLowerCase().trim() === searchName)
+        : list.find(i => i.name.toLowerCase().trim() === searchName && !i.purchased);
 
       if (existing) {
         const targetName = target === "template" ? "בתבנית" : "ברשימה";
@@ -786,7 +843,8 @@ const AppController = (() => {
     if (!name) return;
     const { catalog } = AppStore.getState();
     const category = els.sheetCustomCategory.value || "שונות";
-    if (!catalog.some(p => p.name === name)) {
+    const searchName = name.toLowerCase().trim();
+    if (!catalog.some(p => p.name.toLowerCase().trim() === searchName)) {
       catalog.push({ id: "p_" + Date.now(), name, category, defaultUnit: "units" });
       saveCatalog();
     }
@@ -872,8 +930,9 @@ const AppController = (() => {
   function handleAddAllTemplate() {
     const { templateList, shoppingList } = AppStore.getState();
     templateList.forEach(item => {
-      if (!shoppingList.some(i => i.name === item.name && !i.purchased)) {
-        shoppingList.push({ ...item, id: "item_" + Date.now(), purchased: false });
+      const searchName = item.name.toLowerCase().trim();
+      if (!shoppingList.some(i => i.name.toLowerCase().trim() === searchName && !i.purchased)) {
+        shoppingList.push({ ...item, id: "item_" + Date.now() + Math.random().toString(36).substr(2, 5), purchased: false });
       }
     });
     saveShoppingList();

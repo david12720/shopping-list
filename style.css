@@ -1094,8 +1094,13 @@ main {
 }
 
 .review-row.existing-item {
-    background-color: #f0fdf4; /* Light green tint */
+    background-color: #f0fdf4; /* Light green tint for catalog match */
     opacity: 0.9;
+}
+
+.review-row.in-list-item {
+    background-color: #fffbeb; /* Light amber for list match */
+    border-right: 4px solid #f59e0b; /* Hebrew RTL: right border highlight */
 }
 
 .review-row input[type="text"]:disabled, 
