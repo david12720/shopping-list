@@ -148,7 +148,7 @@ const AppController = (() => {
 
     async process(text) {
       const { catalog } = AppStore.getState();
-      const categories = Object.keys(AppStore.getCategories());
+      const categories = AppStore.getAllCategories();
       
       AppUI.showAiLoading(this.attachedFile ? "קורא את התמונה..." : "מנתח את הטקסט...");
 
@@ -172,7 +172,7 @@ const AppController = (() => {
       const rows = els.aiReviewList.querySelectorAll(".review-row");
       const selectedItems = [];
       const { catalog } = AppStore.getState();
-      const categories = AppStore.getCategories();
+      const categories = AppStore.getAllCategories();
 
       rows.forEach(row => {
         const checkbox = row.querySelector(".review-check");
