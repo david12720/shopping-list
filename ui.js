@@ -407,7 +407,6 @@ const AppUI = (() => {
     },
 
     showAiPrompt() {
-      AiProcessor.reset();
       els.aiInput.value = "";
       els.aiSendBtn.disabled = true;
       els.aiRecordBtn.classList.remove("recording");

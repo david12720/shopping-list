@@ -123,7 +123,10 @@ const AppController = (() => {
     els.aiRemoveFile.addEventListener("click", () => AiProcessor.removeFile());
     
     // AI Review
-    els.aiBackBtn.addEventListener("click", () => AppUI.showAiPrompt());
+    els.aiBackBtn.addEventListener("click", () => {
+      AiProcessor.reset();
+      AppUI.showAiPrompt();
+    });
     els.aiConfirmBtn.addEventListener("click", () => AiProcessor.confirmReview());
   }
 
@@ -336,6 +339,7 @@ const AppController = (() => {
 
   // === Handlers ===
   function handleAiAdd() {
+    AiProcessor.reset();
     AppUI.showAiPrompt();
   }
 
