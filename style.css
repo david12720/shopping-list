@@ -990,6 +990,16 @@ main {
   box-sizing: border-box;
 }
 
+.ai-action-hint {
+  font-size: 0.85rem;
+  color: var(--primary);
+  text-align: center;
+  min-height: 20px;
+  margin-bottom: 5px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
 .ai-input-actions {
   display: flex;
   gap: 12px;

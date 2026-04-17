@@ -112,9 +112,18 @@ const AppController = (() => {
         els.aiRecordBtn.classList.remove("recording");
       }
       AppUI.hideAiLoading();
-    });
+    // AI Actions
+    const setAiHint = (t) => els.aiActionHint.textContent = t || "\u00A0";
+    els.aiRecipeBtn.addEventListener("mouseenter", () => setAiHint("🧑‍🍳 מצב שף: הצעת מצרכים למנה/מתכון"));
+    els.aiRecipeBtn.addEventListener("mouseleave", () => setAiHint(""));
+    els.aiAttachBtn.addEventListener("mouseenter", () => setAiHint("🖼️ צילום: סריקת רשימה כתובה או מתכון"));
+    els.aiAttachBtn.addEventListener("mouseleave", () => setAiHint(""));
+    els.aiRecordBtn.addEventListener("mouseenter", () => setAiHint("🎤 קול: הקלטת מוצרים להוספה"));
+    els.aiRecordBtn.addEventListener("mouseleave", () => setAiHint(""));
+
     els.aiRecordBtn.addEventListener("click", toggleAiRecording);
     els.aiRecipeBtn.addEventListener("click", () => AiProcessor.toggleRecipeMode());
+
 
     // AI Image Upload
 

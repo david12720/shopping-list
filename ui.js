@@ -76,6 +76,7 @@ const AppUI = (() => {
     aiPromptContainer: document.getElementById("ai-prompt-container"),
     aiLoadingContainer: document.getElementById("ai-loading-container"),
     aiInput: document.getElementById("ai-input"),
+    aiActionHint: document.getElementById("ai-action-hint"),
     aiRecordBtn: document.getElementById("ai-record-btn"),
     aiSendBtn: document.getElementById("ai-send-btn"),
     aiCancelBtn: document.getElementById("ai-cancel-btn"),
