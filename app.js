@@ -323,8 +323,12 @@ const AppController = (() => {
           const existing = shoppingList.find(i => i.name.toLowerCase().trim() === searchName && !i.purchased);
 
           if (existing) {
-            // MERGE: Update amount (Round to 1 decimal)
-            existing.amount = Math.round((existing.amount + item.amount) * 10) / 10;
+            // MERGE: Ask user (Consistent with manual add)
+            if (confirm(`"${item.name}" כבר נמצא ברשימה. להוסיף לכמות הקיימת?`)) {
+              existing.amount = Math.round((existing.amount + item.amount) * 10) / 10;
+              addedNames.push(item.name);
+            }
+            // If No: we skip this item
           } else {
             // Add new
             shoppingList.push({
@@ -335,8 +339,8 @@ const AppController = (() => {
               amount: item.amount,
               purchased: false
             });
+            addedNames.push(item.name);
           }
-          addedNames.push(item.name);
         }
 
         // Save everything at once
