@@ -994,27 +994,46 @@ main {
   display: flex;
   gap: 12px;
   width: 100%;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.ai-record-btn {
-  width: 54px;
-  height: 54px;
+.ai-action-btn {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: var(--card);
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 0;
 }
 
-.ai-record-btn:hover {
-  border-color: #6366f1;
+.ai-action-btn:hover {
+  border-color: var(--primary);
   background: #f5f3ff;
+  transform: translateY(-2px);
+}
+
+/* Specific button overrides */
+.ai-recipe-btn {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #f59e0b;
+  font-size: 1.6rem;
+}
+
+.ai-recipe-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #b45309;
+  color: white;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+  transform: scale(1.1);
 }
 
 .ai-record-btn.recording {
@@ -1023,6 +1042,14 @@ main {
   border-color: #ff4757;
   animation: ai-pulse 1.5s infinite;
   box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
+}
+
+#ai-send-btn {
+  flex-grow: 1;
+  height: 48px;
+  border-radius: 24px;
+  margin-left: 0;
+  font-weight: 600;
 }
 
 .ai-modal {
@@ -1105,23 +1132,6 @@ main {
     height: 24px;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.ai-recipe-btn, .ai-attach-btn {
-    background: #eee;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.ai-recipe-btn.active {
-    background: #007bff;
-    color: white;
-    transform: scale(1.1);
 }
 
 /* Existing AI Pulse */
