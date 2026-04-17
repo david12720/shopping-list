@@ -642,12 +642,14 @@ const AppController = (() => {
         item.unit = unit; 
       }
     } else {
-      // In template, we allow duplicate names if they are different entries (no check)
-      // In shopping list, we check for non-purchased duplicates
-      const existing = (target === "template") ? null : list.find(i => i.name === name && !i.purchased);
+      // Check for existing items with the same name (not purchased for list, any for template)
+      const existing = (target === "template") 
+        ? list.find(i => i.name === name)
+        : list.find(i => i.name === name && !i.purchased);
 
       if (existing) {
-        if (confirm(`"${name}" כבר נמצא ברשימה. להוסיף לכמות הקיימת?`)) {
+        const targetName = target === "template" ? "בתבנית" : "ברשימה";
+        if (confirm(`"${name}" כבר נמצא ${targetName}. להוסיף לכמות הקיימת?`)) {
           existing.amount = Math.round((existing.amount + amount) * 10) / 10;
         } else {
           return false;
