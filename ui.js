@@ -397,7 +397,10 @@ const AppUI = (() => {
       els.aiSendBtn.disabled = true;
       els.aiRecordBtn.classList.remove("recording");
       els.aiPromptContainer.classList.remove("hidden");
+      els.aiReviewContainer.classList.add("hidden");
       els.aiLoadingContainer.classList.add("hidden");
+      els.aiFilePreview.classList.add("hidden");
+      els.aiReviewList.innerHTML = "";
       els.aiModal.classList.remove("hidden");
       setTimeout(() => els.aiInput.focus(), 100);
     },

@@ -106,7 +106,13 @@ const AppController = (() => {
       }
     });
     els.aiSendBtn.addEventListener("click", handleAiSend);
-    els.aiCancelBtn.addEventListener("click", () => AppUI.hideAiLoading());
+    els.aiCancelBtn.addEventListener("click", () => {
+      if (recognition) {
+        recognition.stop();
+        els.aiRecordBtn.classList.remove("recording");
+      }
+      AppUI.hideAiLoading();
+    });
     els.aiRecordBtn.addEventListener("click", toggleAiRecording);
     
     // AI Image Upload
@@ -276,6 +282,13 @@ const AppController = (() => {
   async function handleAiSend() {
     const text = els.aiInput.value.trim();
     if (!text && !AiProcessor.attachedFile) return;
+
+    // Stop recording if active (iPhone fix)
+    if (recognition) {
+      recognition.stop();
+      els.aiRecordBtn.classList.remove("recording");
+    }
+
     await AiProcessor.process(text);
   }
 
