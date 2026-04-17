@@ -1056,6 +1056,21 @@ main {
     border-bottom: none;
 }
 
+.review-row.existing-item {
+    background-color: #f0fdf4; /* Light green tint */
+    opacity: 0.9;
+}
+
+.review-row input[type="text"]:disabled, 
+.review-row select:disabled {
+    background-color: transparent;
+    border-color: transparent;
+    color: #555;
+    cursor: default;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
 .review-row input[type="text"], 
 .review-row input[type="number"],
 .review-row select {

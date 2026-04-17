@@ -424,6 +424,7 @@ const AppUI = (() => {
     renderReviewItem(item, index, categories) {
       const row = document.createElement("div");
       row.className = "review-row";
+      if (item.isExisting) row.classList.add("existing-item");
       row.dataset.index = index;
 
       // Checkbox
@@ -437,6 +438,7 @@ const AppUI = (() => {
       name.type = "text";
       name.value = item.name;
       name.className = "review-name";
+      if (item.isExisting) name.disabled = true;
 
       // Amount
       const amount = document.createElement("input");
@@ -459,6 +461,8 @@ const AppUI = (() => {
       // Category
       const cat = document.createElement("select");
       cat.className = "review-category";
+      if (item.isExisting) cat.disabled = true;
+      
       categories.forEach(c => {
         const opt = document.createElement("option");
         opt.value = c;

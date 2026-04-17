@@ -156,7 +156,18 @@ const AppController = (() => {
         const response = await this.provider.process(text, this.attachedFile, catalog, categories);
         
         if (response && response.items) {
-          this.extractedItems = response.items;
+          // Flag existing items and sync their categories
+          this.extractedItems = response.items.map(item => {
+            const catalogItem = Object.values(catalog).find(
+              c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+            );
+            return {
+              ...item,
+              isExisting: !!catalogItem,
+              // Use existing category if found, otherwise keep AI guess
+              category: catalogItem ? catalogItem.category : item.category
+            };
+          });
           AppUI.showAiReview(this.extractedItems, categories);
         } else {
           throw new Error("לא נמצאו מוצרים");
