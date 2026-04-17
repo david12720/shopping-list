@@ -22,11 +22,12 @@ exports.processShoppingRequest = onCall({
     throw new HttpsError("unauthenticated", "Please sign in first.");
   }
 
-  const text = request.data.text;
-  const catalogNames = request.data.catalogNames || [];
+  const { text, fileData, context } = request.data;
+  const catalogNames = (context && context.catalogNames) || [];
+  const categories = (context && context.categories) || [];
 
-  if (!text) {
-    throw new HttpsError("invalid-argument", "Text is required.");
+  if (!text && !fileData) {
+    throw new HttpsError("invalid-argument", "Text or image is required.");
   }
 
   try {
@@ -37,48 +38,57 @@ exports.processShoppingRequest = onCall({
     });
 
     const prompt = `
-      Analyze this shopping request in Hebrew: "${text}"
-      Extract the items into a JSON array.
+      Analyze this shopping request in Hebrew. 
+      Input might be text: "${text || "Extract from image"}"
+      ${fileData ? "Input also includes an image/photo of a list or recipe." : ""}
+
+      Extract all shopping items into a JSON array.
       
       Rules:
       1. Match item names to these existing catalog names if possible: ${catalogNames.join(", ")}
-      2. If an item isn't in the list, use a natural Hebrew name.
-      3. Determine if the amount is "units" or "kg" (default to "units" if unclear).
-      4. Amounts should be numbers.
+      2. For each item, guess the most appropriate category from this list: ${categories.join(", ")}
+      3. If an item isn't in the catalog, provide its name and best category.
+      4. Determine if the unit is "units" or "kg" (default to "units" if unclear).
+      5. Amounts should be numbers.
       
       Response format MUST be:
       {
         "items": [
-          { "name": "string", "amount": number, "unit": "kg" | "units" }
+          { "name": "string", "amount": number, "unit": "kg" | "units", "category": "string" }
         ]
       }
     `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    
-    // Safely extract usage metadata
-    let usage = null;
-    try {
-      usage = result.usageMetadata || (result.response && result.response.usageMetadata);
-    } catch (e) {
-      console.warn("Metadata extraction failed:", e);
+    let result;
+    if (fileData) {
+      // Multimodal: text + image
+      const imagePart = {
+        inlineData: {
+          data: fileData.split(',')[1], // Remove "data:image/png;base64," prefix
+          mimeType: "image/jpeg" // Gemini handles most image types as parts
+        }
+      };
+      result = await model.generateContent([prompt, imagePart]);
+    } else {
+      // Text only
+      result = await model.generateContent(prompt);
     }
 
-    // Log cost asynchronously (don't wait for it to return response)
-    if (usage && usage.promptTokenCount) {
+    const responseText = result.response.text();
+    
+    // Log cost asynchronously
+    const usage = result.response.usageMetadata;
+    if (usage) {
       const inputCost = (usage.promptTokenCount / 1_000_000) * 0.10;
-      const outputCost = ((usage.candidatesTokenCount || 0) / 1_000_000) * 0.40;
-      const totalCost = inputCost + outputCost;
-
+      const outputCost = (usage.candidatesTokenCount / 1_000_000) * 0.40;
+      
       admin.database().ref("/admin/ai_costs").push({
         timestamp: admin.database.ServerValue.TIMESTAMP,
         uid: request.auth.uid,
         inputTokens: usage.promptTokenCount,
-        outputTokens: usage.candidatesTokenCount || 0,
-        totalTokens: usage.totalTokenCount || usage.promptTokenCount,
-        cost: totalCost,
-        inputTextLength: text.length
+        outputTokens: usage.candidatesTokenCount,
+        cost: inputCost + outputCost,
+        isImage: !!fileData
       }).catch(err => console.error("Logging failed:", err));
     }
 

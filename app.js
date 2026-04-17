@@ -97,7 +97,7 @@ const AppController = (() => {
 
     // AI Modal
     els.aiInput.addEventListener("input", () => {
-      els.aiSendBtn.disabled = !els.aiInput.value.trim();
+      els.aiSendBtn.disabled = !els.aiInput.value.trim() && !AiProcessor.attachedFile;
     });
     els.aiInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey && !els.aiSendBtn.disabled) {
@@ -108,7 +108,154 @@ const AppController = (() => {
     els.aiSendBtn.addEventListener("click", handleAiSend);
     els.aiCancelBtn.addEventListener("click", () => AppUI.hideAiLoading());
     els.aiRecordBtn.addEventListener("click", toggleAiRecording);
+    
+    // AI Image Upload
+    els.aiAttachBtn.addEventListener("click", () => els.aiFileInput.click());
+    els.aiFileInput.addEventListener("change", (e) => AiProcessor.handleFileSelect(e));
+    els.aiRemoveFile.addEventListener("click", () => AiProcessor.removeFile());
+    
+    // AI Review
+    els.aiBackBtn.addEventListener("click", () => AppUI.showAiPrompt());
+    els.aiConfirmBtn.addEventListener("click", () => AiProcessor.confirmReview());
   }
+
+  // === AI Processor (SOLID Orchestrator) ===
+  const AiProcessor = {
+    attachedFile: null,
+    extractedItems: [],
+    provider: null, // Will be set to GeminiProvider
+
+    handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        this.attachedFile = event.target.result; // Base64
+        els.aiPreviewImg.src = this.attachedFile;
+        els.aiFilePreview.classList.remove("hidden");
+        els.aiSendBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    },
+
+    removeFile() {
+      this.attachedFile = null;
+      els.aiFileInput.value = "";
+      els.aiFilePreview.classList.add("hidden");
+      els.aiSendBtn.disabled = !els.aiInput.value.trim();
+    },
+
+    async process(text) {
+      const { catalog } = AppStore.getState();
+      const categories = Object.keys(AppStore.getCategories());
+      
+      AppUI.showAiLoading(this.attachedFile ? "קורא את התמונה..." : "מנתח את הטקסט...");
+
+      try {
+        const response = await this.provider.process(text, this.attachedFile, catalog, categories);
+        
+        if (response && response.items) {
+          this.extractedItems = response.items;
+          AppUI.showAiReview(this.extractedItems, categories);
+        } else {
+          throw new Error("לא נמצאו מוצרים");
+        }
+      } catch (error) {
+        console.error("AI Processor Error:", error);
+        alert("שגיאה בעיבוד: " + error.message);
+        AppUI.showAiPrompt();
+      }
+    },
+
+    async confirmReview() {
+      const rows = els.aiReviewList.querySelectorAll(".review-row");
+      const selectedItems = [];
+      const { catalog } = AppStore.getState();
+      const categories = AppStore.getCategories();
+
+      rows.forEach(row => {
+        const checkbox = row.querySelector(".review-check");
+        if (checkbox.checked) {
+          selectedItems.push({
+            name: row.querySelector(".review-name").value,
+            amount: parseFloat(row.querySelector(".review-amount").value),
+            unit: row.querySelector(".review-unit").value,
+            category: row.querySelector(".review-category").value
+          });
+        }
+      });
+
+      if (selectedItems.length === 0) return;
+
+      AppUI.showAiLoading("מעדכן את הרשימה...");
+      
+      try {
+        const addedNames = [];
+        for (const item of selectedItems) {
+          // Find or Create in catalog
+          let catalogItem = Object.values(catalog).find(
+            c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+          );
+
+          if (!catalogItem) {
+            const newId = "p_" + Date.now() + Math.random().toString(36).substr(2, 5);
+            catalogItem = {
+              id: newId,
+              name: item.name,
+              category: item.category,
+              defaultUnit: item.unit
+            };
+            await AppAPI.saveCatalogItem(catalogItem);
+          }
+
+          // Add to list
+          const newItem = {
+            id: "item_" + Date.now() + Math.random().toString(36).substr(2, 5),
+            name: item.name,
+            category: catalogItem.category,
+            unit: item.unit,
+            amount: item.amount,
+            purchased: false
+          };
+          await AppAPI.addListItem(newItem);
+          addedNames.push(item.name);
+        }
+
+        AppUI.showToast(`${addedNames.length} מוצרים נוספו לרשימה`);
+        AppUI.hideAiLoading();
+        this.removeFile();
+      } catch (error) {
+        console.error("Confirm Review Error:", error);
+        alert("שגיאה בשמירת המוצרים");
+        AppUI.hideAiLoading();
+      }
+    }
+  };
+
+  // === AI Provider Implementation (SOLID Strategy) ===
+  const GeminiProvider = {
+    async process(text, fileData, catalog, categories) {
+      // Logic for calling Firebase Cloud Function with Gemini 2.5 Flash Lite
+      // We pass categories so the AI can guess them correctly
+      const context = {
+        catalogNames: Object.values(catalog).map(p => p.name),
+        categories: categories
+      };
+      
+      // If we have a file, it's a multimodal request
+      const payload = {
+        text: text || "Extract all food items from this image/text.",
+        fileData: fileData, // Base64
+        context: context
+      };
+
+      return await AppAPI.processAiRequest(payload);
+    }
+  };
+
+  // Initialize Processor with Gemini
+  AiProcessor.provider = GeminiProvider;
 
   // === Handlers ===
   function handleAiAdd() {
@@ -117,31 +264,8 @@ const AppController = (() => {
 
   async function handleAiSend() {
     const text = els.aiInput.value.trim();
-    if (!text) return;
-
-    AppUI.showAiLoading("מנתח את הבקשה שלך...");
-
-    try {
-      const { catalog } = AppStore.getState();
-      const response = await AppAPI.processNaturalLanguage(text, catalog);
-
-      if (response && response.items) {
-        const addedItems = [];
-        for (const item of response.items) {
-          const result = await processAiItem(item);
-          if (result) addedItems.push(result);
-        }
-
-        if (addedItems.length > 0) {
-          AppUI.showToast(`${addedItems.join(", ")} נוספו לרשימה`);
-        }
-      }
-    } catch (error) {
-      console.error("AI Error:", error);
-      alert("שגיאה בעיבוד הבקשה: " + error.message);
-    } finally {
-      AppUI.hideAiLoading();
-    }
+    if (!text && !AiProcessor.attachedFile) return;
+    await AiProcessor.process(text);
   }
 
   let recognition;

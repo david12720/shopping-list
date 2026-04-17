@@ -80,6 +80,15 @@ const AppUI = (() => {
     aiSendBtn: document.getElementById("ai-send-btn"),
     aiCancelBtn: document.getElementById("ai-cancel-btn"),
     aiStatus: document.getElementById("ai-status"),
+    aiReviewContainer: document.getElementById("ai-review-container"),
+    aiReviewList: document.getElementById("ai-review-list"),
+    aiConfirmBtn: document.getElementById("ai-confirm-btn"),
+    aiBackBtn: document.getElementById("ai-back-btn"),
+    aiAttachBtn: document.getElementById("ai-attach-btn"),
+    aiFileInput: document.getElementById("ai-file-input"),
+    aiFilePreview: document.getElementById("ai-file-preview"),
+    aiPreviewImg: document.getElementById("ai-preview-img"),
+    aiRemoveFile: document.getElementById("ai-remove-file"),
 
     // Bottom Sheet
     sheetOverlay: document.getElementById("sheet-overlay"),
@@ -396,8 +405,70 @@ const AppUI = (() => {
     showAiLoading(statusText) {
       els.aiStatus.textContent = statusText || "מפענח את הבקשה שלך...";
       els.aiPromptContainer.classList.add("hidden");
+      els.aiReviewContainer.classList.add("hidden");
       els.aiLoadingContainer.classList.remove("hidden");
       els.aiModal.classList.remove("hidden");
+    },
+
+    showAiReview(items, categories) {
+      els.aiPromptContainer.classList.add("hidden");
+      els.aiLoadingContainer.classList.add("hidden");
+      els.aiReviewContainer.classList.remove("hidden");
+      
+      els.aiReviewList.innerHTML = "";
+      items.forEach((item, index) => {
+        els.aiReviewList.appendChild(this.renderReviewItem(item, index, categories));
+      });
+    },
+
+    renderReviewItem(item, index, categories) {
+      const row = document.createElement("div");
+      row.className = "review-row";
+      row.dataset.index = index;
+
+      // Checkbox
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = true;
+      checkbox.className = "review-check";
+
+      // Name
+      const name = document.createElement("input");
+      name.type = "text";
+      name.value = item.name;
+      name.className = "review-name";
+
+      // Amount
+      const amount = document.createElement("input");
+      amount.type = "number";
+      amount.value = item.amount || 1;
+      amount.step = "0.1";
+      amount.className = "review-amount";
+
+      // Unit
+      const unit = document.createElement("select");
+      unit.className = "review-unit";
+      ["units", "kg"].forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u;
+        opt.textContent = u === "units" ? "יח'" : "ק\"ג";
+        opt.selected = item.unit === u;
+        unit.appendChild(opt);
+      });
+
+      // Category
+      const cat = document.createElement("select");
+      cat.className = "review-category";
+      categories.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        opt.selected = item.category === c;
+        cat.appendChild(opt);
+      });
+
+      row.append(checkbox, name, amount, unit, cat);
+      return row;
     },
 
     hideAiLoading() {

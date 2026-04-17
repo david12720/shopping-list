@@ -180,11 +180,30 @@
         <div class="ai-input-wrapper">
           <textarea id="ai-input" placeholder="הקלד או הקלט את הבקשה..." rows="3" dir="rtl"></textarea>
           <div class="ai-input-actions">
+            <input type="file" id="ai-file-input" accept="image/*" class="hidden">
+            <button id="ai-attach-btn" class="ai-attach-btn" aria-label="צרף תמונה">📎</button>
             <button id="ai-record-btn" class="ai-record-btn" aria-label="הקלט קול">🎤</button>
             <button id="ai-send-btn" class="btn-primary">שלח</button>
           </div>
         </div>
+        <div id="ai-file-preview" class="ai-file-preview hidden">
+          <img id="ai-preview-img" src="" alt="תצוגה מקדימה">
+          <button id="ai-remove-file" class="ai-remove-file">✕</button>
+        </div>
         <button id="ai-cancel-btn" class="btn-secondary" style="margin-top: 10px; width: 100%;">ביטול</button>
+      </div>
+
+      <!-- Review State -->
+      <div id="ai-review-container" class="hidden">
+        <h3>מצאנו את המוצרים הבאים:</h3>
+        <p class="ai-help">בחר מה להוסיף וסווג קטגוריות חדשות</p>
+        <div id="ai-review-list" class="ai-review-list">
+          <!-- Items will be injected here -->
+        </div>
+        <div class="modal-actions" style="margin-top: 15px;">
+          <button id="ai-confirm-btn" class="btn-primary">הוסף לרשימה</button>
+          <button id="ai-back-btn" class="btn-secondary">ביטול</button>
+        </div>
       </div>
 
       <!-- Loading State -->

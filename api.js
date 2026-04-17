@@ -161,33 +161,45 @@ const AppAPI = (() => {
     },
 
     // AI & Natural Language
-    async processNaturalLanguage(text, catalog) {
-      // In a real scenario, we would send the catalog so the AI knows existing IDs.
-      // For now, we'll send a simplified version of the catalog names.
-      const catalogNames = catalog.map(p => p.name);
-      return this.callAiProxy(text, catalogNames);
-    },
-
-    async callAiProxy(text, catalogNames) {
-      // This is the "Pluggable" part. 
-      // Currently set up to call a Firebase Cloud Function.
-      // If you switch to Vercel, you only change this URL or method.
+    async processAiRequest(payload) {
+      // payload: { text, fileData, context: { catalogNames, categories } }
       try {
-        // Correct syntax for specifying region in Firebase Compat SDK
         const aiFunction = firebase.app().functions('us-central1').httpsCallable('processShoppingRequest');
-        const response = await aiFunction({ text, catalogNames });
-        return response.data; // Should return { items: [{ name, amount, unit, category }] }
+        const response = await aiFunction(payload);
+        return response.data; // Expected: { items: [{ name, amount, unit, category }] }
       } catch (error) {
-        console.error("AI Proxy Error details:", error);
-        // On some mobile browsers, error.message might be generic, 
-        // so we try to get more details if available.
-        const errorDetail = error.details || error.message || "Unknown error";
-        throw new Error(errorDetail);
+        console.error("AI API Error:", error);
+        throw new Error(error.details || error.message || "שגיאה בחיבור לשרת ה-AI");
       }
     },
 
+    // Legacy method for backward compatibility if needed
+    async processNaturalLanguage(text, catalog) {
+      const catalogNames = catalog.map(p => p.name);
+      return this.processAiRequest({ text, context: { catalogNames } });
+    },
+
     // Data Persistence
+    async saveCatalogItem(item) {
+      const uid = firebase.auth().currentUser.uid;
+      const userSnap = await db.ref(`users/${uid}`).once("value");
+      const groupId = userSnap.val().groupId;
+      return db.ref(`groups/${groupId}/catalog/${item.id}`).set(item);
+    },
+
+    async addListItem(item) {
+      const uid = firebase.auth().currentUser.uid;
+      const userSnap = await db.ref(`users/${uid}`).once("value");
+      const groupId = userSnap.val().groupId;
+      // Get current list
+      const listSnap = await db.ref(`groups/${groupId}/shoppingList`).once("value");
+      const list = listSnap.val() || [];
+      list.push(item);
+      return db.ref(`groups/${groupId}/shoppingList`).set(list);
+    },
+
     saveShoppingList(groupId, data) {
+
       return db.ref(`groups/${groupId}/shoppingList`).set(data);
     },
 
