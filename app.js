@@ -910,18 +910,27 @@ const AppController = (() => {
             AppUI.showView("app");
             AppAPI.setupGroupListeners(groupId, {
               onGroupUpdate: group => AppStore.setState({ group }),
-              onListUpdate: shoppingList => AppStore.setState({ shoppingList }),
-              onCatalogUpdate: catalog => AppStore.setState({ catalog }),
-              onTemplateUpdate: templateList => AppStore.setState({ templateList }),
+              onListUpdate: data => {
+                const normalized = Array.isArray(data) ? data : (data ? Object.values(data) : []);
+                AppStore.setState({ shoppingList: normalized });
+              },
+              onCatalogUpdate: data => {
+                const normalized = Array.isArray(data) ? data : (data ? Object.values(data) : []);
+                AppStore.setState({ catalog: normalized });
+              },
+              onTemplateUpdate: data => {
+                const normalized = Array.isArray(data) ? data : (data ? Object.values(data) : []);
+                AppStore.setState({ templateList: normalized });
+              },
               onStatsUpdate: productStats => AppStore.setState({ productStats }),
-              onCategoriesUpdate: customCategories => {
-
-                const normalized = Array.isArray(customCategories) ? customCategories : (customCategories ? Object.values(customCategories) : []);
+              onCategoriesUpdate: data => {
+                const normalized = Array.isArray(data) ? data : (data ? Object.values(data) : []);
                 AppStore.setState({ customCategories: normalized });
                 AppUI.refreshCategorySelects();
               },
               onConnectionUpdate: connected => AppUI.setSyncStatus(connected)
             });
+
           } else {
             AppStore.setState({ currentGroupId: null });
             AppUI.showView("selection");
