@@ -22,9 +22,10 @@ exports.processShoppingRequest = onCall({
     throw new HttpsError("unauthenticated", "Please sign in first.");
   }
 
-  const { text, fileData, context } = request.data;
+  const { text, fileData, context, mode } = request.data;
   const catalogNames = (context && context.catalogNames) || [];
   const categories = (context && context.categories) || [];
+  const isRecipeMode = mode === 'recipe';
 
   if (!text && !fileData) {
     throw new HttpsError("invalid-argument", "Text or image is required.");
@@ -33,35 +34,57 @@ exports.processShoppingRequest = onCall({
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
     
-    // Switch model based on input: 2.5 Pro for images, 2.5 Flash Lite for text
-    const modelName = fileData ? "gemini-2.5-pro" : "gemini-2.5-flash-lite";
+    // Use 2.5 Pro for images OR recipe mode, 2.5 Flash Lite for simple text
+    const modelName = (fileData || isRecipeMode) ? "gemini-2.5-pro" : "gemini-2.5-flash-lite";
     
     const model = genAI.getGenerativeModel({ 
       model: modelName,
       generationConfig: { responseMimeType: "application/json" }
     });
 
-    const prompt = `
-      Analyze this shopping request in Hebrew. 
-      Input might be text: "${text || "Extract from image"}"
-      ${fileData ? "Input also includes an image/photo of a list or recipe." : ""}
+    let prompt;
+    if (isRecipeMode) {
+      prompt = `
+        You are a helpful culinary assistant. 
+        The user wants to prepare: "${text}".
+        Suggest a list of standard grocery store ingredients needed for this dish.
+        
+        Rules for ingredients:
+        1. Match names to these existing catalog names if possible: ${catalogNames.join(", ")}
+        2. For each item, guess the most appropriate category from this list: ${categories.join(", ")}
+        3. Determine if the unit is "units" or "kg".
+        4. Amounts should be numbers.
+        
+        Response format MUST be:
+        {
+          "items": [
+            { "name": "string", "amount": number, "unit": "kg" | "units", "category": "string" }
+          ]
+        }
+      `;
+    } else {
+      prompt = `
+        Analyze this shopping request in Hebrew. 
+        Input might be text: "${text || "Extract from image"}"
+        ${fileData ? "Input also includes an image/photo of a list or recipe." : ""}
 
-      Extract all shopping items into a JSON array.
-      
-      Rules:
-      1. Match item names to these existing catalog names if possible: ${catalogNames.join(", ")}
-      2. For each item, guess the most appropriate category from this list: ${categories.join(", ")}
-      3. If an item isn't in the catalog, provide its name and best category.
-      4. Determine if the unit is "units" or "kg" (default to "units" if unclear).
-      5. Amounts should be numbers.
-      
-      Response format MUST be:
-      {
-        "items": [
-          { "name": "string", "amount": number, "unit": "kg" | "units", "category": "string" }
-        ]
-      }
-    `;
+        Extract all shopping items into a JSON array.
+        
+        Rules:
+        1. Match item names to these existing catalog names if possible: ${catalogNames.join(", ")}
+        2. For each item, guess the most appropriate category from this list: ${categories.join(", ")}
+        3. If an item isn't in the catalog, provide its name and best category.
+        4. Determine if the unit is "units" or "kg" (default to "units" if unclear).
+        5. Amounts should be numbers.
+        
+        Response format MUST be:
+        {
+          "items": [
+            { "name": "string", "amount": number, "unit": "kg" | "units", "category": "string" }
+          ]
+        }
+      `;
+    }
 
     let result;
     if (fileData) {
@@ -98,7 +121,7 @@ exports.processShoppingRequest = onCall({
         inputTokens: usage.promptTokenCount,
         outputTokens: usage.candidatesTokenCount,
         cost: inputCost + outputCost,
-        isImage: !!fileData
+        isImage: !!fileData || isRecipeMode
       }).catch(err => console.error("Logging failed:", err));
     }
 

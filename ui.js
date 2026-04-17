@@ -84,6 +84,7 @@ const AppUI = (() => {
     aiReviewList: document.getElementById("ai-review-list"),
     aiConfirmBtn: document.getElementById("ai-confirm-btn"),
     aiBackBtn: document.getElementById("ai-back-btn"),
+    aiRecipeBtn: document.getElementById("ai-recipe-btn"),
     aiAttachBtn: document.getElementById("ai-attach-btn"),
     aiFileInput: document.getElementById("ai-file-input"),
     aiFilePreview: document.getElementById("ai-file-preview"),
@@ -406,6 +407,7 @@ const AppUI = (() => {
     },
 
     showAiPrompt() {
+      AiProcessor.reset();
       els.aiInput.value = "";
       els.aiSendBtn.disabled = true;
       els.aiRecordBtn.classList.remove("recording");

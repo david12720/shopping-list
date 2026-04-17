@@ -114,8 +114,10 @@ const AppController = (() => {
       AppUI.hideAiLoading();
     });
     els.aiRecordBtn.addEventListener("click", toggleAiRecording);
-    
+    els.aiRecipeBtn.addEventListener("click", () => AiProcessor.toggleRecipeMode());
+
     // AI Image Upload
+
     els.aiAttachBtn.addEventListener("click", () => els.aiFileInput.click());
     els.aiFileInput.addEventListener("change", (e) => AiProcessor.handleFileSelect(e));
     els.aiRemoveFile.addEventListener("click", () => AiProcessor.removeFile());
@@ -128,12 +130,56 @@ const AppController = (() => {
   // === AI Processor (SOLID Orchestrator) ===
   const AiProcessor = {
     attachedFile: null,
+    recipeMode: false,
     extractedItems: [],
     provider: null, // Will be set to GeminiProvider
+
+    reset() {
+      this.recipeMode = false;
+      this.attachedFile = null;
+      this.extractedItems = [];
+      els.aiRecipeBtn.classList.remove("active");
+      const promptTitle = els.aiPromptContainer.querySelector("h3");
+      const promptHelp = els.aiPromptContainer.querySelector(".ai-help");
+      promptTitle.textContent = "מה להוסיף לרשימה? ✨";
+      promptHelp.textContent = "למשל: \"3 קילו עגבניות\" או צרף צילום של רשימה/מתכון";
+      els.aiInput.placeholder = "הקלד או הקלט את הבקשה...";
+    },
+
+    toggleRecipeMode() {
+      this.recipeMode = !this.recipeMode;
+      els.aiRecipeBtn.classList.toggle("active", this.recipeMode);
+      
+      const promptTitle = els.aiPromptContainer.querySelector("h3");
+      const promptHelp = els.aiPromptContainer.querySelector(".ai-help");
+      
+      if (this.recipeMode) {
+        promptTitle.textContent = "מה תרצו להכין היום? 🧑‍🍳";
+        promptHelp.textContent = "למשל: \"אני רוצה להכין כדורי פלאפל\"";
+        els.aiInput.placeholder = "תאר את המנה או המאכל...";
+        // Clear file if recipe mode is on
+        this.removeFile();
+      } else {
+        promptTitle.textContent = "מה להוסיף לרשימה? ✨";
+        promptHelp.textContent = "למשל: \"3 קילו עגבניות\" או צרף צילום של רשימה/מתכון";
+        els.aiInput.placeholder = "הקלד או הקלט את הבקשה...";
+      }
+    },
 
     handleFileSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      // If recipe mode is on, turn it off when selecting a file
+      if (this.recipeMode) {
+        this.recipeMode = false;
+        els.aiRecipeBtn.classList.remove("active");
+        const promptTitle = els.aiPromptContainer.querySelector("h3");
+        const promptHelp = els.aiPromptContainer.querySelector(".ai-help");
+        promptTitle.textContent = "מה להוסיף לרשימה? ✨";
+        promptHelp.textContent = "למשל: \"3 קילו עגבניות\" או צרף צילום של רשימה/מתכון";
+        els.aiInput.placeholder = "הקלד או הקלט את הבקשה...";
+      }
 
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -156,10 +202,14 @@ const AppController = (() => {
       const { catalog } = AppStore.getState();
       const categories = AppStore.getAllCategories();
       
-      AppUI.showAiLoading(this.attachedFile ? "קורא את התמונה..." : "מנתח את הטקסט...");
+      let loadingMsg = "מנתח את הטקסט...";
+      if (this.attachedFile) loadingMsg = "קורא את התמונה...";
+      if (this.recipeMode) loadingMsg = "מכין לך רשימה למנה...";
+
+      AppUI.showAiLoading(loadingMsg);
 
       try {
-        const response = await this.provider.process(text, this.attachedFile, catalog, categories);
+        const response = await this.provider.process(text, this.attachedFile, catalog, categories, this.recipeMode);
         
         if (response && response.items) {
           // Flag existing items and sync their categories
@@ -252,7 +302,7 @@ const AppController = (() => {
 
   // === AI Provider Implementation (SOLID Strategy) ===
   const GeminiProvider = {
-    async process(text, fileData, catalog, categories) {
+    async process(text, fileData, catalog, categories, recipeMode) {
       // Logic for calling Firebase Cloud Function with Gemini 2.5 Flash Lite
       // We pass categories so the AI can guess them correctly
       const context = {
@@ -260,11 +310,21 @@ const AppController = (() => {
         categories: categories
       };
       
-      // If we have a file, it's a multimodal request
+      // Default extraction prompt
+      let promptText = text || "Extract all food items from this image/text.";
+      
+      // Special prompt for recipe mode
+      if (recipeMode) {
+        promptText = `Suggest ingredients for the following dish: "${text}". 
+        Be concise and list standard items that would be found in a grocery store.
+        If the user didn't specify a dish, just say you're ready to help with recipes.`;
+      }
+
       const payload = {
-        text: text || "Extract all food items from this image/text.",
+        text: promptText,
         fileData: fileData, // Base64
-        context: context
+        context: context,
+        mode: recipeMode ? 'recipe' : 'extract'
       };
 
       return await AppAPI.processAiRequest(payload);

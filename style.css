@@ -1107,7 +1107,7 @@ main {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.ai-attach-btn {
+.ai-recipe-btn, .ai-attach-btn {
     background: #eee;
     border: none;
     border-radius: 50%;
@@ -1115,6 +1115,13 @@ main {
     height: 40px;
     font-size: 1.2rem;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ai-recipe-btn.active {
+    background: #007bff;
+    color: white;
+    transform: scale(1.1);
 }
 
 /* Existing AI Pulse */
