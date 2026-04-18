@@ -1019,6 +1019,9 @@ const AppController = (() => {
 
     AppAPI.onAuthStateChanged(async user => {
       if (user) {
+        // Sync basic user info for Admin Dashboard
+        AppAPI.syncUserRecord(user.uid, user.displayName, user.email, user.photoURL);
+
         // Fetch full user record to check for isAdmin
         try {
           const userRecord = await AppAPI.fetchUserRecord(user.uid);

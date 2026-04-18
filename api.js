@@ -78,17 +78,22 @@ const AppAPI = (() => {
       const updates = {};
       updates[`/groups/${groupId}`] = groupData;
       updates[`/invites/${inviteCode}`] = groupId;
-      updates[`/users/${uid}/groupId`] = groupId;
+      updates[`/users/${uid}`] = {
+        name: userName,
+        email: userEmail,
+        photoURL: userPhoto,
+        groupId: groupId
+      };
 
       await db.ref().update(updates);
       return groupId;
-    },
+      },
 
-    async joinGroupByCode(uid, userName, userEmail, userPhoto, inviteCode) {
+      async joinGroupByCode(uid, userName, userEmail, userPhoto, inviteCode) {
       const code = inviteCode.toUpperCase();
       const snapshot = await db.ref(`invites/${code}`).once("value");
       const groupId = snapshot.val();
-      
+
       if (!groupId) throw new Error("INVALID_CODE");
 
       const updates = {};
@@ -98,17 +103,31 @@ const AppAPI = (() => {
         photoURL: userPhoto,
         role: "member"
       };
-      updates[`/users/${uid}/groupId`] = groupId;
+      updates[`/users/${uid}`] = {
+        name: userName,
+        email: userEmail,
+        photoURL: userPhoto,
+        groupId: groupId
+      };
 
       await db.ref().update(updates);
       return groupId;
+      },
+
+    async syncUserRecord(uid, name, email, photoURL) {
+      const snapshot = await db.ref(`/users/${uid}`).once("value");
+      const existing = snapshot.val() || {};
+
+      // Update only if changed to avoid unnecessary writes
+      if (existing.name !== name || existing.email !== email || existing.photoURL !== photoURL) {
+        return db.ref(`/users/${uid}`).update({ name, email, photoURL });
+      }
     },
 
-    async leaveGroup(uid, groupId) {
-      const updates = {};
-      updates[`/users/${uid}/groupId`] = null;
-      updates[`/groups/${groupId}/members/${uid}`] = null;
-      return db.ref().update(updates);
+    getUserGroupId(uid, callback) {
+      const ref = db.ref(`users/${uid}/groupId`);
+      ref.on("value", snapshot => callback(snapshot.val()));
+      return ref;
     },
 
     async updateGroupName(groupId, newName) {
