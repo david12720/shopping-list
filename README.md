@@ -8,6 +8,7 @@ A real-time family shopping list web app with Hebrew RTL interface.
 
 - **Google Sign-in** — secure personal identification
 - **Shared Groups** — create a group and invite family members via code
+- **Admin Dashboard** — Super Admin view to manage users across the system, monitor AI costs, and set monthly LLM budget limits per user.
 - **Shared real-time list** — everyone in the group sees changes instantly
 - **65+ Israeli grocery products** organized in 8 categories
 - **Dynamic "Most Purchased"** — automatically tracks and sorts frequently bought items based on group history

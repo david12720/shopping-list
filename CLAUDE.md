@@ -13,6 +13,8 @@ A Hebrew shopping list application with real-time synchronization via Firebase, 
 
 - ✅ Google Sign-in for user identification
 - ✅ Create and join shared shopping groups via invite codes
+- ✅ Admin Dashboard — manage all users, monitor LLM costs, and set monthly limits
+- ✅ AI LLM Rate Limiting — automatic usage capping per user ($ USD/month)
 - ✅ Add items to shopping list with custom amounts and units (units / kg)
 - ✅ Edit item amounts directly from the list
 - ✅ Mark items as purchased (strikethrough)
@@ -117,11 +119,14 @@ To allow Google Sign-in on a live domain (like GitHub Pages):
 
 ### Firebase Structure
 
-**New Structure (Multi-tenant with Groups)**
+**New Structure (Multi-tenant with Groups & Admin)**
 ```
 /users/{uid}:
   name: "David"
+  email: "david@gmail.com"
+  photoURL: "https://..."
   groupId: "grp_abc123"
+  isAdmin: true (optional)
 
 /groups/{groupId}:
   name: "המשפחה שלי"
@@ -130,8 +135,16 @@ To allow Google Sign-in on a live domain (like GitHub Pages):
   shoppingList: [...]
   catalog: [...]
   members:
-    {uid1}: { name, photoURL, role: "owner" }
-    {uid2}: { name, photoURL, role: "member" }
+    {uid1}: { name, photoURL, email, role: "owner" }
+
+/admin/ai_costs/{pushId}:
+  uid: "{uid}"
+  cost: 0.0012
+  timestamp: 1713512345678
+  model: "gemini-2.5-pro"
+
+/admin/limits/{uid}:
+  maxCostPerMonth: 5.0 (USD)
 
 /invites/{inviteCode}: "{groupId}"
 ```

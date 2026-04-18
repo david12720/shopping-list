@@ -20,6 +20,7 @@ The shopping list app currently uses a single shared Firebase Realtime Database 
   email: "david@gmail.com"
   photoURL: "https://..."
   groupId: "grp_abc123"
+  isAdmin: true
 
 /groups/{groupId}:
   name: "המשפחה שלי"
@@ -30,6 +31,15 @@ The shopping list app currently uses a single shared Firebase Realtime Database 
   members:
     {uid1}: { name, email, photoURL, role: "owner" }
     {uid2}: { name, email, photoURL, role: "member" }
+
+/admin/ai_costs/{pushId}:
+  uid: "{uid}"
+  cost: number
+  timestamp: timestamp
+  model: string
+
+/admin/limits/{uid}:
+  maxCostPerMonth: number
 
 /invites/{inviteCode}: "{groupId}"   ← lookup table for join-by-code
 ```
