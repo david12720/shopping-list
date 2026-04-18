@@ -527,7 +527,7 @@ const AppUI = (() => {
 
       // Name column (to hold name + notice)
       const nameCol = document.createElement("div");
-      nameCol.style.flex = "2";
+      nameCol.className = "review-name-col";
       nameCol.style.display = "flex";
       nameCol.style.flexDirection = "column";
 

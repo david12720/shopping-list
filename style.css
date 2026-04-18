@@ -1089,6 +1089,24 @@ main {
     border-bottom: 1px solid #eee;
 }
 
+@media (max-width: 500px) {
+    .review-row {
+        grid-template-columns: 30px 1fr 55px 70px; /* 4 columns on mobile */
+        gap: 4px 8px;
+    }
+
+    .review-category {
+        grid-column: 2 / 5;
+        width: 100%;
+        font-size: 0.85rem !important;
+        margin-top: 2px;
+    }
+
+    .review-name {
+        font-size: 1rem !important; /* Slightly larger text on mobile for readability */
+    }
+}
+
 .review-row:last-child {
     border-bottom: none;
 }
@@ -1103,16 +1121,17 @@ main {
     border-right: 4px solid #f59e0b; /* Hebrew RTL: right border highlight */
 }
 
-.review-row input[type="text"]:disabled, 
+.review-row input[type="text"]:disabled,
 .review-row select:disabled {
     background-color: transparent;
     border-color: transparent;
-    color: #555;
+    color: #333; /* Darker text for better contrast when disabled */
     cursor: default;
     appearance: none;
     -webkit-appearance: none;
+    opacity: 1; /* iOS Safari fix: ensure disabled text is visible */
+    -webkit-text-fill-color: #333; /* iOS specific fix for disabled text color */
 }
-
 .review-row input[type="text"], 
 .review-row input[type="number"],
 .review-row select {
