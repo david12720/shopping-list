@@ -18,6 +18,8 @@ const AppUI = (() => {
     // Header / User
     userAvatar: document.getElementById("user-avatar"),
     userName: document.getElementById("user-name"),
+    selectionAvatar: document.querySelector(".selection-avatar"),
+    selectionUserName: document.querySelector(".selection-user-name"),
     settingsBtn: document.getElementById("settings-btn"),
     logoutBtn: document.getElementById("logout-btn"),
     syncStatus: document.getElementById("sync-status"),
@@ -385,8 +387,14 @@ const AppUI = (() => {
       // but UI shows/hides views and updates core elements.
       
       if (state.currentUser) {
-        els.userAvatar.src = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
-        els.userName.textContent = state.currentUser.displayName || "";
+        const photo = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
+        const name = state.currentUser.displayName || "";
+        
+        if (els.userAvatar) els.userAvatar.src = photo;
+        if (els.userName) els.userName.textContent = name;
+        
+        if (els.selectionAvatar) els.selectionAvatar.src = photo;
+        if (els.selectionUserName) els.selectionUserName.textContent = name;
       }
 
       if (state.currentUser && state.currentGroupId) {

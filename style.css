@@ -1597,6 +1597,26 @@ main {
   line-height: 1.6;
 }
 
+.selection-profile {
+  margin: -20px auto 24px;
+  padding: 8px 16px 8px 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  width: fit-content;
+}
+
+.selection-profile .avatar {
+  width: 40px;
+  height: 40px;
+  border-color: var(--border);
+}
+
+.selection-user-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 #google-login-btn {
   display: flex;
   align-items: center;
