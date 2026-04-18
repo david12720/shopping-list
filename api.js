@@ -137,11 +137,15 @@ const AppAPI = (() => {
       return snapshot.val() || {};
     },
 
+    async fetchUserRecord(uid) {
+      const snapshot = await db.ref(`/users/${uid}`).once("value");
+      return snapshot.val();
+    },
+
     async fetchAllAiCosts() {
       const snapshot = await db.ref("/admin/ai_costs").once("value");
       return snapshot.val() || {};
     },
-
     async fetchLimits() {
       const snapshot = await db.ref("/admin/limits").once("value");
       return snapshot.val() || {};

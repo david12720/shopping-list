@@ -1017,9 +1017,22 @@ const AppController = (() => {
     initSpeechRecognition();
     AppStore.subscribe(state => AppUI.render(state));
 
-    AppAPI.onAuthStateChanged(user => {
+    AppAPI.onAuthStateChanged(async user => {
       if (user) {
-        AppStore.setState({ currentUser: user });
+        // Fetch full user record to check for isAdmin
+        try {
+          const userRecord = await AppAPI.fetchUserRecord(user.uid);
+          // Merge Firebase Auth user with our DB user record
+          const mergedUser = {
+            ...user,
+            isAdmin: userRecord?.isAdmin || false
+          };
+          AppStore.setState({ currentUser: mergedUser });
+        } catch (err) {
+          console.error("Failed to fetch user record:", err);
+          AppStore.setState({ currentUser: user });
+        }
+
         AppAPI.getUserGroupId(user.uid, groupId => {
           if (groupId) {
             AppStore.setState({ currentGroupId: groupId });
