@@ -1091,19 +1091,37 @@ main {
 
 @media (max-width: 500px) {
     .review-row {
-        grid-template-columns: 30px 1fr 55px 70px; /* 4 columns on mobile */
-        gap: 4px 8px;
+        grid-template-columns: 25px 1fr 45px 60px 85px; /* 5 columns back in one line, tighter widths */
+        gap: 4px;
+        padding: 8px 4px;
+    }
+
+    .review-row input[type="text"], 
+    .review-row input[type="number"],
+    .review-row select {
+        font-size: 0.8rem !important;
+        padding: 4px 1px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .review-category, .review-unit, .review-amount {
+        width: 100%;
     }
 
     .review-category {
-        grid-column: 2 / 5;
+        grid-column: auto; /* Back to its own column */
         width: 100%;
-        font-size: 0.85rem !important;
-        margin-top: 2px;
+    }
+
+    .review-name-col {
+        min-width: 0; /* Critical for flex/grid items to shrink correctly */
     }
 
     .review-name {
-        font-size: 1rem !important; /* Slightly larger text on mobile for readability */
+        font-size: 0.85rem !important;
+        width: 100%;
+        box-sizing: border-box;
     }
 }
 
