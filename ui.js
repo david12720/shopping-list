@@ -381,11 +381,12 @@ const AppUI = (() => {
     showToast,
     
     render(state) {
-      // Views visibility
-      if (!state.currentUser) {
-        els.loadingView.classList.toggle("hidden", !!state.currentUser); // Wait, if no user and not initializing?
-        // Logic for which view to show belongs in app.js controller,
-        // but UI provides the methods.
+      // Views visibility logic is handled in AppController, 
+      // but UI shows/hides views and updates core elements.
+      
+      if (state.currentUser) {
+        els.userAvatar.src = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
+        els.userName.textContent = state.currentUser.displayName || "";
       }
 
       if (state.currentUser && state.currentGroupId) {
@@ -395,8 +396,6 @@ const AppUI = (() => {
         renderSuggested(state);
         renderMembers(state);
 
-        els.userAvatar.src = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
-        els.userName.textContent = state.currentUser.displayName;
         els.groupNameInput.value = state.group ? state.group.name : "";
         els.displayInviteCode.textContent = state.group ? state.group.inviteCode : "------";
         els.refreshInviteCode.classList.toggle("hidden", state.group?.ownerId !== state.currentUser.uid);
