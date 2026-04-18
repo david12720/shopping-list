@@ -164,7 +164,8 @@ const AppAPI = (() => {
       return db.ref().update(updates);
     },
 
-    // Real-time Data Sync    setupGroupListeners(groupId, callbacks) {
+    // Real-time Data Sync
+    setupGroupListeners(groupId, callbacks) {
       this.detachListeners();
 
       refs.group = db.ref(`groups/${groupId}`);
