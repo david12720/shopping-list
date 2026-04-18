@@ -107,10 +107,13 @@ header h1 {
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,0.5);
+  object-fit: cover;
+  display: block;
+  background-color: rgba(255,255,255,0.2);
 }
 
 #user-name {

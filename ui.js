@@ -387,13 +387,28 @@ const AppUI = (() => {
       // but UI shows/hides views and updates core elements.
       
       if (state.currentUser) {
-        const photo = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
+        // Use a higher resolution if it's a Google photo
+        let photo = state.currentUser.photoURL || "https://www.gravatar.com/avatar/0000?d=mp";
+        if (photo.includes("googleusercontent.com")) {
+          photo = photo.replace("/s96-c/", "/s400-c/"); // Request larger image
+        }
         const name = state.currentUser.displayName || "";
         
-        if (els.userAvatar) els.userAvatar.src = photo;
-        if (els.userName) els.userName.textContent = name;
+        const updateImg = (img) => {
+          if (!img) return;
+          if (img.src !== photo) {
+            img.src = photo;
+            img.onerror = () => {
+              console.warn("Avatar failed to load, using fallback");
+              img.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=random";
+            };
+          }
+        };
+
+        updateImg(els.userAvatar);
+        updateImg(els.selectionAvatar);
         
-        if (els.selectionAvatar) els.selectionAvatar.src = photo;
+        if (els.userName) els.userName.textContent = name;
         if (els.selectionUserName) els.selectionUserName.textContent = name;
       }
 
