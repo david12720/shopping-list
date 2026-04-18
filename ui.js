@@ -406,15 +406,30 @@ const AppUI = (() => {
       }
     },
 
-    renderAdminDashboard(users, costs, limits) {
+    renderAdminDashboard(users, groups, costs, limits) {
       const now = new Date();
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       let totalMonthCost = 0;
       let html = "";
 
-      const userEntries = Object.entries(users);
+      // Ensure we see ALL users that have AI costs even if they aren't in 'users' yet
+      const costUids = [...new Set(Object.values(costs).map(c => c.uid))];
+      const allUids = [...new Set([...Object.keys(users), ...costUids])];
+      
+      allUids.forEach((uid) => {
+        let user = users[uid] || {};
+        
+        // RECOVERY: If user info is missing, try to find it in groups
+        if (!user.name) {
+          Object.values(groups).some(g => {
+            if (g.members && g.members[uid]) {
+              user = { ...user, ...g.members[uid] };
+              return true; // Stop searching
+            }
+            return false;
+          });
+        }
 
-      userEntries.forEach(([uid, user]) => {
         // Calculate user costs for current month
         const userCosts = Object.values(costs).filter(c => c.uid === uid);
         const monthCosts = userCosts.filter(c => {

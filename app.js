@@ -751,9 +751,10 @@ const AppController = (() => {
     AppUI.els.adminModalOverlay.classList.remove("hidden");
     try {
       const users = await AppAPI.fetchAllUsers();
+      const groups = await AppAPI.fetchAllGroups();
       const costs = await AppAPI.fetchAllAiCosts();
       const limits = await AppAPI.fetchLimits();
-      AppUI.renderAdminDashboard(users, costs, limits);
+      AppUI.renderAdminDashboard(users, groups, costs, limits);
     } catch (err) {
       console.error("Failed to fetch admin data:", err);
       AppUI.showToast("שגיאה בטעינת נתוני מנהל");

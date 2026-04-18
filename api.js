@@ -156,8 +156,12 @@ const AppAPI = (() => {
       return snapshot.val() || {};
     },
 
-    async fetchUserRecord(uid) {
-      const snapshot = await db.ref(`/users/${uid}`).once("value");
+    async fetchAllGroups() {
+      const snapshot = await db.ref("/groups").once("value");
+      return snapshot.val() || {};
+    },
+
+    async fetchUserRecord(uid) {      const snapshot = await db.ref(`/users/${uid}`).once("value");
       return snapshot.val();
     },
 
