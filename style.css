@@ -1090,6 +1090,15 @@ main {
 }
 
 @media (max-width: 500px) {
+    .ai-modal {
+        width: 98% !important;
+        padding: 10px 5px !important;
+    }
+
+    .ai-review-list {
+        padding: 2px;
+    }
+
     .review-row {
         grid-template-columns: 25px 1fr 45px 60px 85px; /* 5 columns back in one line, tighter widths */
         gap: 4px;
