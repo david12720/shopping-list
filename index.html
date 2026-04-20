@@ -74,6 +74,14 @@
         <div id="empty-state">
           <p>הרשימה ריקה</p>
           <p>לחצו על + כדי להוסיף מוצרים</p>
+          <div id="chef-empty-card" class="chef-card">
+            <div class="chef-card-icon">🧑‍🍳</div>
+            <div class="chef-card-content">
+              <h3>מה תרצו להכין היום?</h3>
+              <p>תנו לשף לעזור לכם לבנות את הרשימה המושלמת לכל מתכון.</p>
+              <button id="chef-empty-btn" class="btn-primary">בוא נתחיל ✨</button>
+            </div>
+          </div>
         </div>
         <ul id="shopping-list"></ul>
         <div id="list-actions" class="list-actions hidden">
@@ -81,6 +89,18 @@
           <button id="clear-all" class="btn-danger">נקה הכל</button>
         </div>
       </section>
+
+      <!-- Chef Nudge (Floating) -->
+      <div id="chef-nudge" class="chef-nudge hidden">
+        <button id="nudge-close" class="nudge-close">✕</button>
+        <div class="nudge-content">
+          <div class="nudge-icon">🧑‍🍳</div>
+          <div class="nudge-body">
+            <p id="nudge-text">מתכננים ארוחה? בואו נכין רשימה!</p>
+            <button id="nudge-action" class="btn-text">נסה עכשיו ✨</button>
+          </div>
+        </div>
+      </div>
 
       <!-- View 2: Template -->
       <section id="template-view" class="view">

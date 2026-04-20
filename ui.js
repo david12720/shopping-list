@@ -103,6 +103,14 @@ const AppUI = (() => {
     aiPreviewImg: document.getElementById("ai-preview-img"),
     aiRemoveFile: document.getElementById("ai-remove-file"),
 
+    // Chef Nudge
+    chefNudge: document.getElementById("chef-nudge"),
+    nudgeClose: document.getElementById("nudge-close"),
+    nudgeAction: document.getElementById("nudge-action"),
+    nudgeText: document.getElementById("nudge-text"),
+    chefEmptyBtn: document.getElementById("chef-empty-btn"),
+    chefEmptyCard: document.getElementById("chef-empty-card"),
+
     // Bottom Sheet
     sheetOverlay: document.getElementById("sheet-overlay"),
     bottomSheet: document.getElementById("bottom-sheet"),

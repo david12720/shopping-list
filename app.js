@@ -145,6 +145,47 @@ const AppController = (() => {
     els.aiRecordBtn.addEventListener("click", toggleAiRecording);
     els.aiRecipeBtn.addEventListener("click", () => AiProcessor.toggleRecipeMode());
 
+    // Chef Nudge & Card
+    els.chefEmptyBtn.addEventListener("click", () => {
+      AiProcessor.toggleRecipeMode(true);
+      AppUI.showAiPrompt();
+    });
+
+    els.nudgeClose.addEventListener("click", () => {
+      els.chefNudge.classList.add("hidden");
+    });
+
+    els.nudgeAction.addEventListener("click", () => {
+      els.chefNudge.classList.add("hidden");
+      AiProcessor.toggleRecipeMode(true);
+      AppUI.showAiPrompt();
+    });
+
+    // Check for nudge every 5 minutes if list is not empty
+    setInterval(() => {
+      const state = AppStore.getState();
+      if (state.shoppingList.length > 0 && Math.random() > 0.7) {
+        showRandomNudge();
+      }
+    }, 5 * 60 * 1000);
+
+    function showRandomNudge() {
+      const tips = [
+        "מתכננים ארוחה? בואו נכין רשימה! 🧑‍🍳",
+        "צריכים רעיון למנה חדשה? השף כאן לעזור ✨",
+        "יש לכם רשימה כתובה? פשוט צלמו אותה! 📸",
+        "רוצים להוסיף מוצרים במהירות? דברו איתי! 🎤"
+      ];
+      const tip = tips[Math.floor(Math.random() * tips.length)];
+      els.nudgeText.textContent = tip;
+      els.chefNudge.classList.remove("hidden");
+      
+      // Auto hide after 15 seconds
+      setTimeout(() => {
+        els.chefNudge.classList.add("hidden");
+      }, 15000);
+    }
+
 
     // AI Image Upload
 
@@ -179,8 +220,8 @@ const AppController = (() => {
       els.aiInput.placeholder = "הקלד או הקלט את הבקשה...";
     },
 
-    toggleRecipeMode() {
-      this.recipeMode = !this.recipeMode;
+    toggleRecipeMode(force) {
+      this.recipeMode = force !== undefined ? force : !this.recipeMode;
       els.aiRecipeBtn.classList.toggle("active", this.recipeMode);
       
       const promptTitle = els.aiPromptContainer.querySelector("h3");
