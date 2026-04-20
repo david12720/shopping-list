@@ -54,22 +54,23 @@ const AppAPI = (() => {
     },
 
     async createGroup(uid, userName, userEmail, userPhoto, groupName, seedProducts) {
+      if (!uid) throw new Error("UID_REQUIRED");
       const groupId = "grp_" + Date.now();
       const inviteCode = AppUtils.generateInviteCode();
       
       const groupData = {
-        name: groupName,
+        name: groupName || "קבוצה חדשה",
         ownerId: uid,
         inviteCode: inviteCode,
         shoppingList: [],
-        catalog: seedProducts,
+        catalog: seedProducts || [],
         templateList: [],
         customCategories: [],
         members: {
           [uid]: {
-            name: userName,
-            email: userEmail,
-            photoURL: userPhoto,
+            name: userName || "",
+            email: userEmail || "",
+            photoURL: userPhoto || "",
             role: "owner"
           }
         }
@@ -79,9 +80,9 @@ const AppAPI = (() => {
       updates[`/groups/${groupId}`] = groupData;
       updates[`/invites/${inviteCode}`] = groupId;
       updates[`/users/${uid}`] = {
-        name: userName,
-        email: userEmail,
-        photoURL: userPhoto,
+        name: userName || "",
+        email: userEmail || "",
+        photoURL: userPhoto || "",
         groupId: groupId
       };
 
@@ -89,7 +90,8 @@ const AppAPI = (() => {
       return groupId;
       },
 
-      async joinGroupByCode(uid, userName, userEmail, userPhoto, inviteCode) {
+    async joinGroupByCode(uid, userName, userEmail, userPhoto, inviteCode) {
+      if (!uid) throw new Error("UID_REQUIRED");
       const code = inviteCode.toUpperCase();
       const snapshot = await db.ref(`invites/${code}`).once("value");
       const groupId = snapshot.val();
@@ -98,15 +100,15 @@ const AppAPI = (() => {
 
       const updates = {};
       updates[`/groups/${groupId}/members/${uid}`] = {
-        name: userName,
-        email: userEmail,
-        photoURL: userPhoto,
+        name: userName || "",
+        email: userEmail || "",
+        photoURL: userPhoto || "",
         role: "member"
       };
       updates[`/users/${uid}`] = {
-        name: userName,
-        email: userEmail,
-        photoURL: userPhoto,
+        name: userName || "",
+        email: userEmail || "",
+        photoURL: userPhoto || "",
         groupId: groupId
       };
 
@@ -115,12 +117,17 @@ const AppAPI = (() => {
       },
 
     async syncUserRecord(uid, name, email, photoURL) {
+      if (!uid) return;
       const snapshot = await db.ref(`/users/${uid}`).once("value");
       const existing = snapshot.val() || {};
 
+      const n = name || "";
+      const e = email || "";
+      const p = photoURL || "";
+
       // Update only if changed to avoid unnecessary writes
-      if (existing.name !== name || existing.email !== email || existing.photoURL !== photoURL) {
-        return db.ref(`/users/${uid}`).update({ name, email, photoURL });
+      if (existing.name !== n || existing.email !== e || existing.photoURL !== p) {
+        return db.ref(`/users/${uid}`).update({ name: n, email: e, photoURL: p });
       }
     },
 

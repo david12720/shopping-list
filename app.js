@@ -1028,13 +1028,23 @@ const AppController = (() => {
           const userRecord = await AppAPI.fetchUserRecord(user.uid);
           // Merge Firebase Auth user with our DB user record
           const mergedUser = {
-            ...user,
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
             isAdmin: userRecord?.isAdmin || false
           };
           AppStore.setState({ currentUser: mergedUser });
         } catch (err) {
           console.error("Failed to fetch user record:", err);
-          AppStore.setState({ currentUser: user });
+          const basicUser = {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            isAdmin: false
+          };
+          AppStore.setState({ currentUser: basicUser });
         }
 
         AppAPI.getUserGroupId(user.uid, groupId => {
