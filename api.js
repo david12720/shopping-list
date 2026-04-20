@@ -150,6 +150,11 @@ const AppAPI = (() => {
       return db.ref().update(updates);
     },
 
+    async leaveGroup(uid, groupId) {
+      if (!uid || !groupId) return;
+      return this.removeMember(groupId, uid);
+    },
+
     async removeMember(groupId, targetUid) {
       const updates = {};
       updates[`/groups/${groupId}/members/${targetUid}`] = null;
