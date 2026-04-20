@@ -22,6 +22,7 @@ const AppUI = (() => {
     selectionUserName: document.querySelector(".selection-user-name"),
     settingsBtn: document.getElementById("settings-btn"),
     logoutBtn: document.getElementById("logout-btn"),
+    appGroupName: document.getElementById("app-group-name"),
     syncStatus: document.getElementById("sync-status"),
     badge: document.getElementById("badge"),
     
@@ -419,12 +420,23 @@ const AppUI = (() => {
         renderSuggested(state);
         renderMembers(state);
 
+        if (els.appGroupName) {
+          const groupName = state.group ? state.group.name : "רשימת קניות";
+          els.appGroupName.textContent = groupName + " ";
+          els.appGroupName.appendChild(els.syncStatus);
+        }
+
         els.groupNameInput.value = state.group ? state.group.name : "";
         els.displayInviteCode.textContent = state.group ? state.group.inviteCode : "------";
         els.refreshInviteCode.classList.toggle("hidden", state.group?.ownerId !== state.currentUser.uid);
 
         // Admin section
         els.adminSection.classList.toggle("hidden", !state.currentUser.isAdmin);
+      } else {
+        if (els.appGroupName) {
+          els.appGroupName.textContent = "רשימת קניות ";
+          els.appGroupName.appendChild(els.syncStatus);
+        }
       }
     },
 
